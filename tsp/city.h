@@ -16,10 +16,13 @@ typedef enum
 } city_type;
 
 
+void generate_points(city_type type, int n, double *xout, double yout);
+
 class city
 {
 public:
 	city(city_type t, int nstops);
+	city(int nstops, double *x, double *y);
 	~city();
 	
 	void plot(const std::string& file) const;
@@ -30,6 +33,9 @@ public:
 //	int num_drivers;
 	double *locsx;
 	double *locsy;
+	
+private:
+	void refresh_distances();
 };
 
 

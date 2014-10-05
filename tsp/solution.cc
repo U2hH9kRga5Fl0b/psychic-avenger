@@ -133,6 +133,11 @@ std::ostream& operator<<(std::ostream& out, const solution& sol)
 	{
 		out << std::setw(3) << sol.path[i] << " ";
 	}
+	out << std::endl;
+	for (int i=0; i<n; i++)
+	{
+		out << std::setw(3) << i << ":"<< std::setw(3) << sol.already_serviced[i] << " ";
+	}
 	
 	return out << "]";
 }
@@ -198,9 +203,10 @@ int solution::remove_at(int idx)
 	return stop;
 }
 
-
 bool solution::is_valid()
 {
+	void trap();
+	
 	int n = c->num_cities;
 	
 	int count_alread = 0;
@@ -210,22 +216,25 @@ bool solution::is_valid()
 	{
 		for (int j=0;j<n;j++)
 		{
-			if (path[i] < 0 && path[j] >= 0)
+			if (path[i] < 0 && path[j] >= 0 && i < j)
 			{
 				std::cout << "positive after -1" << std::endl;
+				trap();
 				exit(-1);
 			}
 			
 			if (path[i] == path[j] && path[i] >= 0 && i != j)
 			{
 				std::cout << "duplicate!!" << std::endl;
+				trap();
 				exit(-1);
 			}
 		}
 		
-		if (!already_serviced[path[i]])
+		if (path[i] >= 0 && !already_serviced[path[i]])
 		{
-			std::cout << "already_serviced doesn't know!" << std::endl;
+			std::cout << "already_serviced doesn't know about " << path[i] << " at index " << i << std::endl;
+			trap();
 			exit(-1);
 		}
 		if (already_serviced[i])
@@ -239,12 +248,14 @@ bool solution::is_valid()
 		if (path[i] >= n)
 		{
 			std::cout << "path goes to invalid stop!" << std::endl;
+			trap();
 			exit(-1);
 		}
 	}
 	if (count_alread != count_path)
 	{
 		std::cout << "mismatch" << std::endl;
+		trap();
 		exit(-1);
 	}
 }

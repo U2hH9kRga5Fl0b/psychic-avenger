@@ -1,12 +1,11 @@
 
+#include "geometry.h"
+
 
 #define EPSILON 1e-15
 
 #include <opencv/highgui.h>
 #include <opencv2/opencv.hpp>
-
-#include "routines.h"
-
 
 bool intersect(
 	double x1b, double y1b,
@@ -157,6 +156,12 @@ bool find_intersecting_paths(solution* sol, int& idx1, int& idx2, int attempts)
 {
 	int n = sol->c->num_cities;
 	
+	if (sol->path[4] < 0)
+	{
+		// need at least 4 points...
+		return false;
+	}
+	
 	do
 	{
 		idx1 = rand() % (n-1);
@@ -214,4 +219,38 @@ bool find_intersecting_paths(solution* sol, int& idx1, int& idx2, int attempts)
 	}
 
 	return false;
+}
+
+
+
+void get_bounds(double *allx, double *ally, int n,
+		double& minx, double& maxx, double& miny, double& maxy)
+{
+	minx = +DBL_MAX;
+	maxx = -DBL_MAX;
+	miny = +DBL_MAX;
+	maxy = -DBL_MAX;
+	
+	for (int i=0; i<n; i++)
+	{
+		double x = allx[i];
+		double y = ally[i];
+		
+		if (x < minx)
+		{
+			minx = x;
+		}
+		if (x > maxx)
+		{
+			maxx = x;
+		}
+		if (y < miny)
+		{
+			miny = y;
+		}
+		if (y > maxy)
+		{
+			maxy = y;
+		}
+	}
 }

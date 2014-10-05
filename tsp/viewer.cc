@@ -1,10 +1,11 @@
 
 #include "viewer.h"
+#include "geometry.h"
 
 #include <opencv/highgui.h>
 
-#define width  640
-#define height 480
+#define width  500
+#define height 500
 
 #include <vector>
 #include <mutex>
@@ -79,29 +80,8 @@ viewer::viewer(solution* sol_, const std::string& name, int freq_) :
 	maxy{-DBL_MAX},
 	freq{freq_}
 {
-	city *c = sol->c;
-	for (int i=0; i<c->num_cities; i++)
-	{
-		double x = c->locsx[i];
-		double y = c->locsy[i];
-		
-		if (x < minx)
-		{
-			minx = x;
-		}
-		if (x > maxx)
-		{
-			maxx = x;
-		}
-		if (y < miny)
-		{
-			miny = y;
-		}
-		if (y > maxy)
-		{
-			maxy = y;
-		}
-	}
+	city* c = sol->c;
+	get_bounds(c->locsx, c->locsy, c->num_cities, minx, maxx, miny, maxy);
 	
 	std::lock_guard<std::mutex> lock(mut);
 	
@@ -129,6 +109,13 @@ viewer::~viewer()
 	locs.at(location).used = false;
 }
 
+
+
+void viewer::pause()
+{
+	cv::waitKey(0);
+}
+
 void viewer::update()
 {
 	std::lock_guard<std::mutex> lock(mut);
@@ -150,8 +137,14 @@ void viewer::update()
 	
 	mat = cv::Scalar(0, 0, 0);
 	
-	cv::Point prev(sol->c->locsx[sol->path[0]],
-		       sol->c->locsy[sol->path[0]]);
+	
+	double x = sol->c->locsx[sol->path[0]];
+	double y = sol->c->locsy[sol->path[0]];
+	x = width  * (x - minx) / (maxx - minx);
+	y = height * (y - miny) / (maxy - miny);
+	
+	cv::Point prev((int)x, (int)y);
+	cv::circle(mat, prev, 3, color);
 	
 	for (int i=1; i<num_cities; i++)
 	{
@@ -160,15 +153,14 @@ void viewer::update()
 			break;
 		}
 		
-		double x = sol->c->locsx[sol->path[i]];
-		double y = sol->c->locsy[sol->path[i]];
-		
+		x = sol->c->locsx[sol->path[i]];
+		y = sol->c->locsy[sol->path[i]];
 		x = width  * (x - minx) / (maxx - minx);
 		y = height * (y - miny) / (maxy - miny);
 		
 		cv::Point next((int) x, (int) y);
-		
 		cv::circle(mat, next, 3, color);
+		
 		cv::line(mat, prev, next, color, 1, 8, 0);
 		
 		prev = next;

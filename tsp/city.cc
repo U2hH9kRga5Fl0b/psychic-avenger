@@ -6,10 +6,9 @@
 #include <iostream>
 #include <cfloat>
 
-namespace
-{
 
-void get_random_cities(city_type t, double *x, double *y, int n)
+
+void generate_points(city_type t, int n, double *x, double *y)
 {
 	const double PI = std::atan(1.0)*4;
 	switch(t)
@@ -74,8 +73,28 @@ void get_random_cities(city_type t, double *x, double *y, int n)
 	std::cout << "pi=" << PI << std::endl;
 }
 
+
+void city::refresh_distances()
+{
+	for (int i=0; i<num_cities; i++)
+	{
+		for (int j=0; j<num_cities; j++)
+		{
+			double dx = locsx[i] - locsx[j];
+			double dy = locsy[i] - locsy[j];
+			distances[i * num_cities + j] = sqrt(dx * dx + dy * dy);
+		}
+	}
 }
 
+city::city(int nstops_, double *x, double *y) :
+	num_cities{nstops_},
+	distances{new distance[nstops_ * nstops_]},
+	locsx{x},
+	locsy{y}
+{
+	refresh_distances();
+}
 
 city::city(city_type t, int nstops_) :
 	num_cities{nstops_},
@@ -83,17 +102,8 @@ city::city(city_type t, int nstops_) :
 	locsx{new double[nstops_]},
 	locsy{new double[nstops_]}
 {
-	get_random_cities(t, locsx, locsy, nstops_);
-	
-	for (int i=0; i<nstops_; i++)
-	{
-		for (int j=0; j<nstops_; j++)
-		{
-			double dx = locsx[i] - locsx[j];
-			double dy = locsy[i] - locsy[j];
-			distances[i * nstops_ + j] = sqrt(dx * dx + dy * dy);
-		}
-	}
+	generate_points(t, nstops_, locsx, locsy);
+	refresh_distances();
 }
 
 city::~city()

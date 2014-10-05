@@ -84,6 +84,14 @@ void find_neighbor_resched(solution *s, solution *tmp, double annealing_factor)
 	int n = s->c->num_cities;
 	city* c = s->c;
 	
+	
+	if (s->path[4] < 0)
+	{
+		// need several points...
+		return;
+	}
+	
+	
 	int idx = 0;
 	double mc = c->get_cost(s->path[idx], s->path[idx+1]);
 	for (int i=0;i<20;i++)

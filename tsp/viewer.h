@@ -15,6 +15,8 @@ public:
 	
 	void update();
 	void snapshot(const std::string& filename);
+	
+	void pause();
 private:
 	solution *sol;
 	std::string winname;
