@@ -235,12 +235,12 @@ int main(int argc, char **argv)
 
 	city c{CLUSTER_CITY_TYPE, num_cities};
 	
-	subdivide(&c);
-	
-	if (true)
-	{
-		return -1;
-	}
+//	subdivide(&c);
+//	
+//	if (true)
+//	{
+//		return -1;
+//	}
 	
 	
 	
