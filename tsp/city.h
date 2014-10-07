@@ -28,6 +28,8 @@ public:
 	void plot(const std::string& file) const;
 	distance get_cost(int i, int j) const { return distances[i * num_cities + j]; }
 	
+	int get_index_of_stop(int stop) const;
+	
 	int num_cities;
 	distance *distances;
 //	int num_drivers;
