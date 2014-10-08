@@ -14,7 +14,7 @@ do
         echo $file
         outfile=objects/$(basename $file).o
         
-        c="g++ -pthread -g3 -c -std=c++11 -I/usr/include/opencv $file -o $outfile";
+        c="g++ -flto -pthread -g3 -c -std=c++11 -I/usr/include/opencv $file -o $outfile";
         
         if [[ -e $outfile ]]
         then
@@ -51,12 +51,16 @@ do
         fi
 done
 
+
+g++ objects/get_exe_name.cc.o -o get_exe_name
+
 echo $main_method_files
 
 for file in $main_method_files
 do
-        exefile=$(basename $file).out
+        exefile=./bin/$(./get_exe_name $file)
         echo $exefile
-        g++  $file -pthread $archivefile -o $exefile -lopencv_core -lopencv_highgui
+        g++ -flto $file -pthread $archivefile -o $exefile -lopencv_core -lopencv_highgui
 done
 
+rm get_exe_name
