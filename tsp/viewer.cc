@@ -154,7 +154,7 @@ void viewer::update()
 	
 	for (int i=1; i<num_cities; i++)
 	{
-		if (!sol->has_serviced(i))
+		if (sol->get_stop(i) < 0)
 		{
 			break;
 		}

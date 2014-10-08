@@ -100,15 +100,21 @@ std::ostream& operator<<(std::ostream& out, const solution& sol)
 {
 	int n = sol.c->num_cities;
 	
-	out << "[c=" << std::setw(12) << sol.get_cost() << "][";
+	out << "[c=" << std::setw(12) << sol.get_cost() << "]\n";
+	
 	for (int i=0; i<n; i++)
 	{
-		out << std::setw(3) << sol.path[i] << " ";
+		out << "  " << std::setw(3) << i                    << " ";
 	}
 	out << std::endl;
 	for (int i=0; i<n; i++)
 	{
-		out << "[" << std::setw(3) << i << ":"<< std::setw(3) << sol.serviced_index[i] << "]";
+		out << "  " << std::setw(3) << sol.path[i]          << " ";
+	}
+	out << std::endl;
+	for (int i=0; i<n; i++)
+	{
+		out << "  " << std::setw(3) << sol.serviced_index[i] << " ";
 	}
 	
 	return out << "]";
@@ -180,14 +186,20 @@ int solution::remove_at(int idx)
 
 bool solution::is_valid()
 {
+	if (!DEBUG)
+	{
+		return true;
+	}
+	
 	int n = c->num_cities;
 	
 	int count_alread = 0;
 	int count_path = 0;
 	
-	for (int i=0;i<n;i++)
+	for (int i=0; i<n; i++)
 	{
-		for (int j=0;j<n;j++)
+		bool fnd = false;
+		for (int j=0; j<n; j++)
 		{
 			if (path[i] < 0 && path[j] >= 0 && i < j)
 			{
@@ -202,6 +214,17 @@ bool solution::is_valid()
 				std::cout << "duplicate!!" << std::endl;
 				trap();
 			}
+			
+			if (path[j] == i)
+			{
+				fnd = true;
+			}
+		}
+		
+		if (has_serviced(i) != fnd)
+		{
+			std::cout << "i=" << i << " and fnd = " << fnd << std::endl;
+			trap();
 		}
 		
 		if (path[i] >= 0 && serviced_index[path[i]] < 0)
@@ -288,28 +311,28 @@ void solution::nearest(std::function<void(void)> callback)
 	int n = c->num_cities;
 	
 	int* remaining = new int[n];
-	for (int i=0;i<n;i++)
+	for (int i=0; i<n; i++)
 	{
 		remaining[i] = i;
 	}
 	
-	int prev = rand() % n; // first one chosen at random...
-	service(0, prev);
+	int first = rand() % n; // first one chosen at random...
+	service(0, remaining[first]);
 	
 	{
 		int tmp = remaining[0];
-		remaining[0] = remaining[prev];
-		remaining[prev] = tmp;
+		remaining[0] = remaining[first];
+		remaining[first] = tmp;
 	}
 	
-	for (int i=1;i<n;i++)
+	for (int i=1; i<n; i++)
 	{
 		int idxmin = i;
-		double min = c->get_cost(prev, remaining[idxmin]);
+		double min = c->get_cost(remaining[i-1], remaining[idxmin]);
 		
 		for (int j=i+1; j<n; j++)
 		{
-			double d = c->get_cost(prev, remaining[j]);
+			double d = c->get_cost(remaining[i-1], remaining[j]);
 			if (d < min)
 			{
 				idxmin = j;
@@ -323,9 +346,7 @@ void solution::nearest(std::function<void(void)> callback)
 			remaining[idxmin] = tmp;
 		}
 		
-		service(i, idxmin);
-		
-		prev = remaining[idxmin];
+		service(i, remaining[i]);
 		
 		callback();
 		is_valid();

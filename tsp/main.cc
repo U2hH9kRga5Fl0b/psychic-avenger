@@ -133,12 +133,12 @@ void tabu_search(solution *sol, int outerphase = 100000, const std::string&name=
 		tabu_option* option = options.get_best_option(sol);
 		if (option == nullptr)
 		{
-			std::cout << "Ran out of options..." << std::endl;
+//			std::cout << "Ran out of options..." << std::endl;
 			return;
 		}
 		
 		double improvement = option->get_improvement(sol);
-		if (improvement < 0)
+		if (improvement >= 0)
 		{
 			std::cout << "This is bad... 1059873" << std::endl;
 			continue;
@@ -146,11 +146,16 @@ void tabu_search(solution *sol, int outerphase = 100000, const std::string&name=
 		
 		count = 0;
 		
-		std::cout << "for sol" << *sol << " it appears that the best option is " << *option << std::endl;
+		std::cout << "for sol" << *sol << " it appears that the best option is \n" << *option << std::endl;
+		std::cout << "The improvement is " << improvement << std::endl;
+		v.update();
+//		v.pause();
 		
 		double old_cost = sol->get_cost();
 		option->apply(sol);
 		double new_cost = sol->get_cost();
+		
+		std::cout << "And leaves: " << *sol << std::endl;
 		
 		if (abs(new_cost - old_cost - improvement) > 1e-14)
 		{
@@ -160,7 +165,6 @@ void tabu_search(solution *sol, int outerphase = 100000, const std::string&name=
 		}
 		
 		sol->is_valid();
-		v.update();
 	}
 }
 
@@ -181,7 +185,7 @@ void neighbor_search(solution *sol, int outerphase = 100000, const std::string& 
 		}
 		
 		double improvement = option->get_improvement(sol);
-		if (improvement < 0)
+		if (improvement >= 0)
 		{
 			continue;
 		}
@@ -456,18 +460,22 @@ void show_final_solution(solution* sol, const std::string& name)
 void print_usage(int argc, char **argv)
 {
 	std::cout << "usage: " << argv[0] << " ("
+
 		<< "  (e|exact) "
 		<< "| (h|nearest)"
 		<< "| (s|subdivide)"
 		<< "| (n|neighborhood)"
 		<< "| (t|tabu)"
+		<< "| (r|random)"
+		<< "| (0|nothing)"
 		<< ") <city file>" << std::endl;
 	trap();
 }
 
 int main(int argc, char **argv)
 {
-	srand(time(nullptr));
+//	srand(time(nullptr));
+	srand(5000014);
 //	test_intersect();
 	
 	if (argc != 3)
@@ -502,6 +510,7 @@ int main(int argc, char **argv)
 		viewer v{sol, "nearest"};
 		sol->nearest([&v](){v.update();});
 		std::cout << "cost = " << sol->get_cost() << std::endl;
+		std::cout << *sol << std::endl;
 		show_final_solution(sol, "heuristic");
 	}
 	else if (algo == "s" || algo == "subdivide")
@@ -522,6 +531,19 @@ int main(int argc, char **argv)
 		sol->random();
 		tabu_search(sol);
 		show_final_solution(sol, "tabu");
+	}
+	else if (algo == "r" || algo == "random")
+	{
+		std::cout << "Using random algorithm" << std::endl;
+		solution* sol = new solution{c};
+		viewer v{sol, "random"};
+		sol->random([&v](){v.update();});
+		std::cout << "cost = " << sol->get_cost() << std::endl;
+		show_final_solution(sol, "random");
+	}
+	else if (algo == "0" || algo == "nothing")
+	{
+		view_city(c, "city");
 	}
 	else
 	{

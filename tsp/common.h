@@ -4,4 +4,9 @@
 
 void trap(const std::string &msg="death to us all!");
 
+
+#define DEBUG 1
+
+
+
 #endif

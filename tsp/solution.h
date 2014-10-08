@@ -14,6 +14,7 @@ public:
 	
 	void random(std::function<void(void)> callback=[](){});
 	void nearest(std::function<void(void)> callback=[](){});
+	void nearest_additional(std::function<void(void)> callback=[](){});
 	void empty();
 	
 	// could cache these...
@@ -31,13 +32,14 @@ public:
 	{
 		return serviced_index[stop] >= 0;
 	}
+// Be careful when you use this method...
 	void service(int index, int stop)
 	{
-		int oldstop = path[index];
-		if (oldstop >= 0)
-		{
-			serviced_index[oldstop] = -1;
-		}
+//		int oldstop = path[index];
+//		if (oldstop >= 0)
+//		{
+//			serviced_index[oldstop] = -1;
+//		}
 		if (stop >= 0)
 		{
 			serviced_index[stop] = index;

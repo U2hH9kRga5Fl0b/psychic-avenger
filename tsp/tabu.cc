@@ -53,7 +53,17 @@ double swap_tabu_option::get_improvement(solution* sol)
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2); 
 	
+//	std::cout << ndx1 << " and " << ndx2 << std::endl;
+//	std::cout << "---------------------------------" << std::endl;
+	
 	city* c = sol->get_city();
+	
+	if (ndx1 > ndx2)
+	{
+		int tmp = ndx1;
+		ndx1 = ndx2;
+		ndx2 = tmp;
+	}
 	
 	// get previous cost
 	double o = 
@@ -61,16 +71,16 @@ double swap_tabu_option::get_improvement(solution* sol)
 			sol->get_stop(ndx1-1),
 			sol->get_stop(ndx1  )) + 
 		c->get_cost(
-			sol->get_stop(ndx1-1),
-			sol->get_stop(ndx1  ));
+			sol->get_stop(ndx2  ),
+			sol->get_stop(ndx2+1));
 	// get new cost
 	double n = 
 		c->get_cost(
 			sol->get_stop(ndx1-1),
 			sol->get_stop(ndx2  )) + 
 		c->get_cost(
-			sol->get_stop(ndx2-1),
-			sol->get_stop(ndx1  ));
+			sol->get_stop(ndx1  ),
+			sol->get_stop(ndx2+1));
 	
 	
 	return n - o;
@@ -82,10 +92,10 @@ bool swap_tabu_option::in_bounds(solution* sol)
 	int ndx2 = sol->get_index_of_stop(stop2);
 	
 	return
-		priv_in_bounds(ndx2  , sol) &&
-		priv_in_bounds(ndx2-1, sol) && 
-		priv_in_bounds(ndx1  , sol) &&
-		priv_in_bounds(ndx1-1, sol);
+		priv_in_bounds(ndx2-1, sol) &&
+		priv_in_bounds(ndx2+1, sol) && 
+		priv_in_bounds(ndx1-1, sol) &&
+		priv_in_bounds(ndx1+1, sol);
 }
 
 bool swap_tabu_option::intersects(solution* sol)
@@ -140,6 +150,15 @@ double reschedule_tabu_option::get_improvement(solution* sol)
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2);
 	
+	if (abs(ndx1 - ndx2) < 2)
+	{
+		// should handle this situation some day...
+		return DBL_MAX;
+	}
+	
+	
+//	std::cout << ndx1 << " and " << ndx2 << std::endl;
+	
 	city* ci = sol->get_city();
 	
 	int a = sol->get_stop(ndx1-1);
@@ -182,6 +201,7 @@ void reschedule_tabu_option::apply(solution* sol)
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2);
 	
+	
 	// twice as many operations as we need...
 	int stop = sol->remove_at(ndx1);
 	if (stop != stop1)
@@ -189,7 +209,14 @@ void reschedule_tabu_option::apply(solution* sol)
 		std::cout << "This should never happen..." << std::endl;
 	}
 	
-	sol->insert_at(stop1, ndx2);
+	if (ndx1 < ndx2)
+	{
+		sol->insert_at(stop1, ndx2+1);
+	}
+	else
+	{
+		sol->insert_at(stop1, ndx2);
+	}
 	
 	sol->is_valid();
 }
@@ -207,11 +234,21 @@ tabu_options::tabu_options(city* c) : swap_options{nullptr}, reschedule_options{
 	int n = c->num_cities;
 	for (int i=0; i<n; i++)
 	{
-		for(int j=i+1; j<n; j++)
+		for(int j=0; j<n; j++)
 		{
+			if (i==j)
+			{
+				continue;
+			}
+			
 			reschedule_tabu_option* r = new reschedule_tabu_option{i, j, c};
 			r->next = reschedule_options;
 			reschedule_options = r;
+			
+			if (j < i)
+			{
+				continue;
+			}
 			
 			swap_tabu_option* s = new swap_tabu_option{i, j, c};
 			s->next = swap_options;
@@ -223,7 +260,7 @@ tabu_options::~tabu_options() { delete swap_options; delete reschedule_options; 
 
 tabu_option* tabu_options::get_best_option(solution* sol)
 {
-	double best_improvement = -DBL_MAX;
+	double best_improvement = DBL_MAX;
 	tabu_option* best = nullptr;
 	
 	{
@@ -237,13 +274,13 @@ tabu_option* tabu_options::get_best_option(solution* sol)
 			}
 			
 			double improvement = swap->get_improvement(sol);
-			if (improvement <= 0)
+			if (improvement >= 0)
 			{
 				swap = (swap_tabu_option*) swap->next;
 				continue;
 			}
 			
-			if (improvement > best_improvement)
+			if (improvement < best_improvement)
 			{
 				best = swap;
 				best_improvement = improvement;
@@ -264,13 +301,13 @@ tabu_option* tabu_options::get_best_option(solution* sol)
 			}
 			
 			double improvement = resched->get_improvement(sol);
-			if (improvement <= 0)
+			if (improvement >= 0)
 			{
 				resched = (reschedule_tabu_option*) resched->next;
 				continue;
 			}
 			
-			if (improvement > best_improvement)
+			if (improvement < best_improvement)
 			{
 				best = resched;
 				best_improvement = improvement;
