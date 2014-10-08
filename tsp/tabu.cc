@@ -263,6 +263,7 @@ tabu_option* tabu_options::get_best_option(solution* sol)
 	double best_improvement = DBL_MAX;
 	tabu_option* best = nullptr;
 	
+	if(1)
 	{
 		swap_tabu_option* swap = swap_options;
 		while (swap != nullptr)
@@ -290,6 +291,7 @@ tabu_option* tabu_options::get_best_option(solution* sol)
 		}
 	}
 	
+	if(0)
 	{
 		reschedule_tabu_option* resched = reschedule_options;
 		while (resched != nullptr)

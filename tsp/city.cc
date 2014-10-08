@@ -14,7 +14,7 @@ std::ostream& operator<<(std::ostream& out, const city& c)
 	out << c.num_cities << std::endl;
 	for (int i=0;i<c.num_cities;i++)
 	{
-		out << c.locsx[i] << "\t" << c.locsy[i] << std::endl;
+		out << std::setw(12) << c.locsx[i] << "\t" << std::setw(12) << c.locsy[i] << std::endl;
 	}
 	return out;
 }

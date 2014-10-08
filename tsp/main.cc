@@ -507,10 +507,12 @@ int main(int argc, char **argv)
 	{
 		std::cout << "Using greedy shortest next path algorithm." << std::endl;
 		solution* sol = new solution{c};
-		viewer v{sol, "nearest"};
-		sol->nearest([&v](){v.update();});
-		std::cout << "cost = " << sol->get_cost() << std::endl;
-		std::cout << *sol << std::endl;
+		{
+			viewer v{sol, "nearest"};
+			sol->nearest([&v](){v.update();});
+			std::cout << "cost = " << sol->get_cost() << std::endl;
+			std::cout << *sol << std::endl;
+		}
 		show_final_solution(sol, "heuristic");
 	}
 	else if (algo == "s" || algo == "subdivide")
@@ -528,7 +530,13 @@ int main(int argc, char **argv)
 	else if (algo == "t" || algo == "tabu")
 	{
 		solution *sol = new solution{c};
-		sol->random();
+		
+//		sol->random();
+		{
+			sol->nearest();
+			viewer v{sol, "nearest"};
+			sol->nearest([&v](){v.update();});
+		}
 		tabu_search(sol);
 		show_final_solution(sol, "tabu");
 	}
