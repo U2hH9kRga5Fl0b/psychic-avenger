@@ -19,6 +19,6 @@ subcity *get_subcity(city *old, double xmin, double xmax, double ymin, double ym
 void append_to(subcity *subcity, solution *subsol, solution *sol);
 
 
-solution *backtrack(city *beginning, void (improve)(solution* s), int max_num_cities=50);
+solution *subdivide_backtrack(city *beginning, void (improve)(solution* s), int max_num_cities=50);
 
 #endif

@@ -1,5 +1,7 @@
 #include "solution.h"
 
+#include "common.h"
+
 #include <iomanip>
 
 solution::solution(city *c_) :
@@ -205,8 +207,6 @@ int solution::remove_at(int idx)
 
 bool solution::is_valid()
 {
-	void trap();
-	
 	int n = c->num_cities;
 	
 	int count_alread = 0;
@@ -220,14 +220,12 @@ bool solution::is_valid()
 			{
 				std::cout << "positive after -1" << std::endl;
 				trap();
-				exit(-1);
 			}
 			
 			if (path[i] == path[j] && path[i] >= 0 && i != j)
 			{
 				std::cout << "duplicate!!" << std::endl;
 				trap();
-				exit(-1);
 			}
 		}
 		
@@ -235,7 +233,6 @@ bool solution::is_valid()
 		{
 			std::cout << "already_serviced doesn't know about " << path[i] << " at index " << i << std::endl;
 			trap();
-			exit(-1);
 		}
 		if (already_serviced[i])
 		{
@@ -249,13 +246,19 @@ bool solution::is_valid()
 		{
 			std::cout << "path goes to invalid stop!" << std::endl;
 			trap();
-			exit(-1);
 		}
 	}
 	if (count_alread != count_path)
 	{
 		std::cout << "mismatch" << std::endl;
 		trap();
-		exit(-1);
 	}
+}
+
+
+
+int solution::get_index_of_stop(int stop) const
+{
+	std::cout << "Implement me!" << std::endl;
+	exit(-1);
 }

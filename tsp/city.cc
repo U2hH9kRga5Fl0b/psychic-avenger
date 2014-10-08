@@ -1,12 +1,54 @@
 #include <stdlib.h>
 
 #include "city.h"
+#include "common.h"
 
 #include <cmath>
 #include <iostream>
 #include <cfloat>
 
 
+std::ostream& operator<<(std::ostream& out, const city& c)
+{
+	out << c.num_cities << std::endl;
+	for (int i=0;i<c.num_cities;i++)
+	{
+		out << c.locsx[i] << "\t" << c.locsy[i] << std::endl;
+		
+	}
+	return out;
+}
+city* load_city(std::istream& in)
+{
+	int size = -1;
+	in >> size;
+	if (size < 0)
+	{
+		std::cout << "Bad city file: need to have a non-negative number of stops." << std::endl;
+		trap();
+	}
+	
+	double* locxs = new double[size];
+	double* locys = new double[size];
+	
+	for (int i=0;i<size;i++)
+	{
+		if (!in)
+		{
+			std::cout << "Hit end of city file prematurely (x): " << i << std::endl;
+			trap();
+		}
+		in >> locxs[i];
+		if (!in)
+		{
+			std::cout << "Hit end of city file prematurely (y): " << i << std::endl;
+			trap();
+		}
+		in >> locys[i];
+	}
+	
+	return new city{size, locxs, locys};
+}
 
 void generate_points(city_type t, int n, double *x, double *y)
 {

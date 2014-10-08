@@ -30,9 +30,6 @@ void backtrack(optimizer *s, int start_index, int stop_index, int cindex)
 	}
 }
 
-}
-
-
 void backtrack(optimizer *s, int start_index, int stop_index)
 {
 	for (int i=start_index; i<stop_index; i++)
@@ -49,10 +46,15 @@ void backtrack(optimizer *s, int start_index, int stop_index)
 	backtrack(s, start_index, stop_index, start_index);
 }
 
+}
 
-optimizer* exact(city *c)
+
+solution* exact(city *c)
 {
-	optimizer *opt = new optimizer{"exact", c, 100};
-	backtrack(opt, 0, c->num_cities);
-	return opt;
+	optimizer opt{"exact", c, 100};
+	backtrack(&opt, 0, c->num_cities);
+	
+	solution* ret = new solution{c};
+	(*ret) = opt.best;
+	return ret;
 }

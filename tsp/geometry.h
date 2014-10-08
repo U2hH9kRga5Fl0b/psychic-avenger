@@ -14,7 +14,10 @@ bool intersect(
 	
 	double& x_intersection, double& y_intersection);
 
+
+
 void test_intersect();
+
 
 bool find_intersecting_paths(solution* sol, int& idx1, int& idx2, int attempts);
 

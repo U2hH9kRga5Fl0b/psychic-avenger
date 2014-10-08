@@ -309,7 +309,7 @@ solution *backtrack(city *beginning,
 }
 
 
-solution *backtrack(city *beginning, void (improve)(solution* s), int max_num_cities)
+solution *subdivide_backtrack(city *beginning, void (improve)(solution* s), int max_num_cities)
 {
 	bigcity_513 = beginning;
 	double xmin_513, xmax_513, ymin_513, ymax_513;

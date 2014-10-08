@@ -17,12 +17,15 @@ public:
 	int get_num_serviced() const;
 	
 	
+	bool has_serviced(int stop) const { return already_serviced[stop]; };
+	int get_index_of_stop(int stop) const;
+	int get_stop(int ndx) const { return path[ndx]; }
+	
+	
 	void insert_at(int stop, int idx);
 	int remove_at(int idx);
 	
 	
-	
-	bool has_serviced(int stop) const { return already_serviced[stop]; };
 	
 	void plot(const std::string& filename) const;
 	

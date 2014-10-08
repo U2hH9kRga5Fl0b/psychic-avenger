@@ -5,6 +5,7 @@
 
 #include <inttypes.h>
 #include <string>
+#include <fstream>
 
 typedef double distance;
 
@@ -28,17 +29,18 @@ public:
 	void plot(const std::string& file) const;
 	distance get_cost(int i, int j) const { return distances[i * num_cities + j]; }
 	
-	int get_index_of_stop(int stop) const;
-	
 	int num_cities;
 	distance *distances;
 //	int num_drivers;
 	double *locsx;
 	double *locsy;
 	
+	friend std::ostream& operator<<(std::ostream& out, const city& c);
 private:
 	void refresh_distances();
 };
 
+
+city* load_city(std::istream& in);
 
 #endif

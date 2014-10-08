@@ -8,8 +8,8 @@ void find_neighbor_2op(solution *s, solution *tmp, double locality);
 void find_neighbor_2pts(solution *s, solution *tmp, double locality);
 void find_neighbor_resched(solution *s, solution *tmp, double annealing_factor);
 
-optimizer* exact(city *c);
-solution*  shortest_path(city *c);
+solution* exact(city *c);
+solution* shortest_path(city *c);
 
 
 bool intersect(

@@ -132,7 +132,6 @@ void viewer::update()
 		cnt = 0;
 	}
 	
-	
 	int num_cities = sol->c->num_cities;
 	
 	mat = cv::Scalar(0, 0, 0);
