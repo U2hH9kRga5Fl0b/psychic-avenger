@@ -1,8 +1,8 @@
 
 #include "subdivider.h"
 
-#include <thread>
 
+#include "common.h"
 #include "geometry.h"
 
 
@@ -101,44 +101,37 @@ void append_to(subcity *subcity, solution *subsol, solution *sol)
 //	std::cout << std::endl;
 	
 	// Right now we will just be really dumb and append them....
-	if (sol->c != subcity->parent)
+	if (sol->get_city() != subcity->parent)
 	{
 		std::cout << "Bad arguments to append_to" << std::endl;
-		exit(-1);
+		trap();
 		return;
 	}
 	
-	int n = sol->c->num_cities;
+	int n = sol->get_city()->num_cities;
 	
-	int ndx;
-	for (ndx=0;ndx<n;ndx++)
-	{
-		if (sol->path[ndx] < 0)
-		{
-			break;
-		}
-	}
+	int ndx = sol->length();
+	
 	if (ndx >= n)
 	{
 		std::cout << "Cannot append to this solution: it is already full!" << std::endl;
-		exit(-1);
+		trap();
 		return;
 	}
 	
-	int ln = subsol->c->num_cities;
+	int ln = subsol->get_city()->num_cities;
 	
 	for (int i=0; i < ln; i++, ndx++)
 	{
 		if (ndx >= n)
 		{
 			std::cout << "cannot append, because the subcity doesn't fit into this solution!" << std::endl;
-			exit(-1);
+			trap();
 			return;
 		}
 		
-		int stop = subcity->mapping[subsol->path[i]];
-		sol->path[ndx] = stop;
-		sol->already_serviced[stop] = true;
+		int stop = subcity->mapping[subsol->get_stop(i)];
+		sol->service(ndx, stop);
 	}
 	
 //	std::cout << "Created this: " << std::endl;
@@ -148,6 +141,7 @@ void append_to(subcity *subcity, solution *subsol, solution *sol)
 }
 
 
+#include "viewer.h"
 
 namespace
 {
@@ -161,7 +155,7 @@ bool inited;
 void draw_square(
 	city* bigcity,
 	double xmini, double xmaxi, double ymini, double ymaxi)
-{	
+{
 	int n = bigcity->num_cities;
 	double xmin, xmax, ymin, ymax;
 	get_bounds(bigcity->locsx, bigcity->locsy, bigcity->num_cities, xmin, xmax, ymin, ymax);
@@ -169,21 +163,8 @@ void draw_square(
 	int height = 500;
 	int width  = 500;
 	cv::Mat mat{cv::Mat::zeros(height, width, CV_8UC3)};
-	cv::Scalar color{
-		255 * (rand() / (double) RAND_MAX),
-		255 * (rand() / (double) RAND_MAX),
-		255 * (rand() / (double) RAND_MAX)};
 	
-	for (int i=0; i<bigcity->num_cities; i++)
-	{
-		double x = bigcity->locsx[i];
-		double y = bigcity->locsy[i];
-		x = width  * (x - xmin) / (xmax - xmin);
-		y = height * (y - ymin) / (ymax - xmin);
-		cv::Point next{(int)x, (int)y};
-		cv::circle(mat, next, 2, color);
-	}
-	
+	view_city(bigcity, mat, width, height);
 	
 	if (!inited)
 	{
@@ -293,9 +274,9 @@ solution *backtrack(city *beginning,
 		xmin, xmax, ymin, ymax);
 	improve(sol);
 	
-	if (sol->c->num_cities > total_num_solved)
+	if (sol->get_city()->num_cities > total_num_solved)
 	{
-		total_num_solved = sol->c->num_cities;
+		total_num_solved = sol->get_city()->num_cities;
 		std::cout << "We have now solved a " <<  total_num_solved << " city." << std::endl;
 	}
 	

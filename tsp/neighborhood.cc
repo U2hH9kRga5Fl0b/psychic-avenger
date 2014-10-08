@@ -1,6 +1,8 @@
 
 #include "routines.h"
 
+#if 0
+
 void find_neighbor_2pts(solution *s, solution *out, double locality)
 {
 	int n = s->c->num_cities;
@@ -160,4 +162,5 @@ void find_neighbor_resched(solution *s, solution *tmp, double annealing_factor)
 	tmp->remove_at(idx2);
 	tmp->insert_at(stop, idx2+1);
 }
+#endif
 

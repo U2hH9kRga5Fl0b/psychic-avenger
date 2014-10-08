@@ -1,6 +1,6 @@
-#include "city.h"
-
+#include "viewer.h"
 #include "common.h"
+
 
 #include <iostream>
 #include <fstream>
@@ -39,13 +39,6 @@ int main(int argc, char **argv)
 		print_usage(argc, argv);
 	}
 	
-	std::ofstream outfile{std::string{argv[3]}};
-	if (!outfile.is_open())
-	{
-		std::cout << "Unable to open output file!!" << std::endl;
-		print_usage(argc, argv);
-	}
-	
 	city* c = nullptr;
 	switch(arg1.at(0))
 	{
@@ -62,7 +55,17 @@ int main(int argc, char **argv)
 			print_usage(argc, argv);
 	}
 	
-	outfile << (*c);
+	{
+		std::ofstream outfile{std::string{argv[3]}};
+		if (!outfile.is_open())
+		{
+			std::cout << "Unable to open output file!!" << std::endl;
+			print_usage(argc, argv);
+		}
+		outfile << (*c);
+	}
+	
+	view_city(c, "city");
 	
 	return 0;
 }

@@ -2,13 +2,18 @@
 #include "viewer.h"
 #include "geometry.h"
 
+#include "common.h"
+
 #include <opencv/highgui.h>
 
-#define width  500
-#define height 500
+#define default_width  500
+#define default_height 500
 
 #include <vector>
 #include <mutex>
+
+
+
 
 namespace
 {
@@ -38,16 +43,18 @@ namespace
 				
 				locs.push_back(l);
 			
-				next_locx += width + 50;
+				next_locx += default_width + 50;
 				if (next_locx > maxx)
 				{
 					next_locx = 100;
-					next_locy += height + 50;
+					next_locy += default_height + 50;
 				
 					if (next_locy > maxy)
 					{
 						break;
 					}
+
+
 				}
 			}
 		}
@@ -61,14 +68,14 @@ namespace
 		}
 		
 		std::cout << "No more available locations for a screen!";
-		exit(-1);
+		trap();
 	}
 }
 
 viewer::viewer(solution* sol_, const std::string& name, int freq_) :
 	sol{sol_},
 	winname{name},
-	mat{cv::Mat::zeros(height, width, CV_8UC3)},
+	mat{cv::Mat::zeros(default_height, default_width, CV_8UC3)},
 	color{
 		255 * (rand() / (double) RAND_MAX),
 		255 * (rand()  / (double) RAND_MAX),
@@ -80,7 +87,7 @@ viewer::viewer(solution* sol_, const std::string& name, int freq_) :
 	maxy{-DBL_MAX},
 	freq{freq_}
 {
-	city* c = sol->c;
+	city* c = sol->get_city();
 	get_bounds(c->locsx, c->locsy, c->num_cities, minx, maxx, miny, maxy);
 	
 	std::lock_guard<std::mutex> lock(mut);
@@ -132,30 +139,31 @@ void viewer::update()
 		cnt = 0;
 	}
 	
-	int num_cities = sol->c->num_cities;
+	int num_cities = sol->get_city()->num_cities;
 	
 	mat = cv::Scalar(0, 0, 0);
 	
 	
-	double x = sol->c->locsx[sol->path[0]];
-	double y = sol->c->locsy[sol->path[0]];
-	x = width  * (x - minx) / (maxx - minx);
-	y = height * (y - miny) / (maxy - miny);
+	double x = sol->get_city()->locsx[sol->get_stop(0)];
+	double y = sol->get_city()->locsy[sol->get_stop(0)];
+	x = default_width  * (x - minx) / (maxx - minx);
+	y = default_height * (y - miny) / (maxy - miny);
 	
 	cv::Point prev((int)x, (int)y);
 	cv::circle(mat, prev, 3, color);
 	
 	for (int i=1; i<num_cities; i++)
 	{
-		if (sol->path[i] < 0)
+		if (!sol->has_serviced(i))
 		{
 			break;
 		}
 		
-		x = sol->c->locsx[sol->path[i]];
-		y = sol->c->locsy[sol->path[i]];
-		x = width  * (x - minx) / (maxx - minx);
-		y = height * (y - miny) / (maxy - miny);
+		x = sol->get_city()->locsx[sol->get_stop(i)];
+		y = sol->get_city()->locsy[sol->get_stop(i)];
+		
+		x = default_width  * (x - minx) / (maxx - minx);
+		y = default_height * (y - miny) / (maxy - miny);
 		
 		cv::Point next((int) x, (int) y);
 		cv::circle(mat, next, 3, color);
@@ -172,4 +180,41 @@ void viewer::update()
 	
 	imshow(winname, mat);
 	cv::waitKey(1);
+}
+
+void view_city(city* ci, const std::string& name)
+{
+	cvNamedWindow(name.c_str(), CV_WINDOW_AUTOSIZE);
+	cvMoveWindow(name.c_str(), 100,100);
+	
+	int height = 500;
+	int width  = 500;
+	
+	cv::Mat mat{cv::Mat::zeros(height, width, CV_8UC3)};
+	view_city(ci, mat, width, height);
+	
+	imshow(name.c_str(), mat);
+	cv::waitKey(0);
+}
+
+void view_city(city* bigcity, cv::Mat& mat, int width, int height)
+{
+	int n = bigcity->num_cities;
+	double xmin, xmax, ymin, ymax;
+	get_bounds(bigcity->locsx, bigcity->locsy, bigcity->num_cities, xmin, xmax, ymin, ymax);
+	
+	cv::Scalar color{
+		255 * (rand() / (double) RAND_MAX),
+		255 * (rand() / (double) RAND_MAX),
+		255 * (rand() / (double) RAND_MAX)};
+	
+	for (int i=0; i<bigcity->num_cities; i++)
+	{
+		double x = bigcity->locsx[i];
+		double y = bigcity->locsy[i];
+		x = width  * (x - xmin) / (xmax - xmin);
+		y = height * (y - ymin) / (ymax - xmin);
+		cv::Point next{(int)x, (int)y};
+		cv::circle(mat, next, 2, color);
+	}
 }

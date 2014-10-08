@@ -7,6 +7,10 @@
 
 #include <opencv2/opencv.hpp>
 
+
+void view_city(city* ci, const std::string& name);
+void view_city(city* bigcity, cv::Mat& mat, int width, int height);
+
 class viewer
 {
 public:

@@ -23,7 +23,7 @@ namespace
 {
 	bool priv_in_bounds(int ndx, solution* sol)
 	{
-		return ndx >= 0 && ndx < sol->c->num_cities && sol->get_stop(ndx) >= 0;
+		return ndx >= 0 && ndx < sol->get_city()->num_cities && sol->get_stop(ndx) >= 0;
 	}
 }
 
@@ -42,7 +42,7 @@ double swap_tabu_option::get_cost_along_path(solution* sol)
 	double cost = 0.0;
 	for (int i=ndx1; i<ndx2; i++)
 	{
-		cost += sol->c->get_cost(sol->get_stop(i), sol->get_stop(i+1));
+		cost += sol->get_city()->get_cost(sol->get_stop(i), sol->get_stop(i+1));
 	}
 	return cost;
 }
@@ -53,21 +53,22 @@ double swap_tabu_option::get_improvement(solution* sol)
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2); 
 	
+	city* c = sol->get_city();
 	
 	// get previous cost
 	double o = 
-		sol->c->get_cost(
+		c->get_cost(
 			sol->get_stop(ndx1-1),
 			sol->get_stop(ndx1  )) + 
-		sol->c->get_cost(
+		c->get_cost(
 			sol->get_stop(ndx1-1),
 			sol->get_stop(ndx1  ));
 	// get new cost
 	double n = 
-		sol->c->get_cost(
+		c->get_cost(
 			sol->get_stop(ndx1-1),
 			sol->get_stop(ndx2  )) + 
-		sol->c->get_cost(
+		c->get_cost(
 			sol->get_stop(ndx2-1),
 			sol->get_stop(ndx1  ));
 	
@@ -93,7 +94,7 @@ bool swap_tabu_option::intersects(solution* sol)
 	int ndx2 = sol->get_index_of_stop(stop2);
 	
 	
-	const city& c = *(sol->c);
+	const city& c = *(sol->get_city());
 	
 	double x_out, y_out;
 	
@@ -121,9 +122,11 @@ void swap_tabu_option::apply(solution* sol)
 	
 	for(;ndx1<ndx2;ndx1++,ndx2--)
 	{
-		int tmp = sol->path[ndx1];
-		sol->path[ndx1] = sol->path[ndx2];
-		sol->path[ndx2] = tmp;
+		int f = sol->get_stop(ndx1);
+		int s = sol->get_stop(ndx2);
+		
+		sol->service(ndx1, s);
+		sol->service(ndx2, f);
 	}
 	
 	sol->is_valid();
@@ -137,6 +140,8 @@ double reschedule_tabu_option::get_improvement(solution* sol)
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2);
 	
+	city* ci = sol->get_city();
+	
 	int a = sol->get_stop(ndx1-1);
 	int s = sol->get_stop(ndx1  ); // aka stop1
 	int b = sol->get_stop(ndx1+1);
@@ -148,14 +153,14 @@ double reschedule_tabu_option::get_improvement(solution* sol)
 	
 	// get previous cost
 	double o = 
-		sol->c->get_cost(a,s) + 
-		sol->c->get_cost(s,b) + 
-		sol->c->get_cost(c,d);
+		ci->get_cost(a,s) + 
+		ci->get_cost(s,b) + 
+		ci->get_cost(c,d);
 	// get new cost
 	double n = 
-		sol->c->get_cost(a,b) + 
-		sol->c->get_cost(c,s) + 
-		sol->c->get_cost(s,d);
+		ci->get_cost(a,b) + 
+		ci->get_cost(c,s) + 
+		ci->get_cost(s,d);
 
 	return n - o;
 }
@@ -197,32 +202,24 @@ void reschedule_tabu_option::apply(solution* sol)
 
 
 
-tabu_options::tabu_options() : swap_options{nullptr}, reschedule_options{nullptr} {}
-tabu_options::~tabu_options() { delete swap_options; delete reschedule_options; }
-
-tabu_options* generate_tabu_options(city* c)
+tabu_options::tabu_options(city* c) : swap_options{nullptr}, reschedule_options{nullptr}
 {
-	tabu_options* options = new tabu_options;
-	
 	int n = c->num_cities;
 	for (int i=0; i<n; i++)
 	{
 		for(int j=i+1; j<n; j++)
 		{
 			reschedule_tabu_option* r = new reschedule_tabu_option{i, j, c};
-			r->next = options->reschedule_options;
-			options->reschedule_options = r;
+			r->next = reschedule_options;
+			reschedule_options = r;
 			
 			swap_tabu_option* s = new swap_tabu_option{i, j, c};
-			s->next = options->swap_options;
-			options->swap_options = s;
+			s->next = swap_options;
+			swap_options = s;
 		}
 	}
-	
-	return options;
 }
-
-
+tabu_options::~tabu_options() { delete swap_options; delete reschedule_options; }
 
 tabu_option* tabu_options::get_best_option(solution* sol)
 {
@@ -298,7 +295,7 @@ tabu_option* tabu_options::get_random_option(solution* sol)
 	tabu_option *start = (rand() % 2) ? (tabu_option *)reschedule_options : (tabu_option *)swap_options;
 	tabu_option *ran = start;
 	
-	int len = sol->c->num_cities * (sol->c->num_cities - 1) / 2;
+	int len = sol->get_city()->num_cities * (sol->get_city()->num_cities - 1) / 2;
 	int num = rand() % len;
 	
 	for (int i=0;i<num || !ran->in_bounds(sol);i++)
@@ -314,3 +311,17 @@ tabu_option* tabu_options::get_random_option(solution* sol)
 }
 
 
+std::ostream& operator<<(std::ostream& out, const tabu_option& op)
+{
+	return out << "[t=" << op.get_name() << "][s1=" << op.stop1 << "][s2=" << op.stop2 << "]";
+}
+
+std::string swap_tabu_option::get_name() const
+{
+	return "swap";
+}
+
+std::string reschedule_tabu_option::get_name() const
+{
+	return "resched";
+}

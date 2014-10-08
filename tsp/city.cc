@@ -6,6 +6,7 @@
 #include <cmath>
 #include <iostream>
 #include <cfloat>
+#include <iomanip>
 
 
 std::ostream& operator<<(std::ostream& out, const city& c)
@@ -14,7 +15,6 @@ std::ostream& operator<<(std::ostream& out, const city& c)
 	for (int i=0;i<c.num_cities;i++)
 	{
 		out << c.locsx[i] << "\t" << c.locsy[i] << std::endl;
-		
 	}
 	return out;
 }
@@ -61,8 +61,6 @@ void generate_points(city_type t, int n, double *x, double *y)
 			{
 				x[i] = rand() / (double) RAND_MAX;
 				y[i] = rand() / (double) RAND_MAX;
-				
-				std::cout << x[i] << ", " << y[i] << std::endl;
 			}
 		}
 		break;
@@ -75,21 +73,22 @@ void generate_points(city_type t, int n, double *x, double *y)
 				
 				x[i] = radius * std::cos(theta);
 				y[i] = radius * std::sin(theta);
-				
-				std::cout << x[i] << ", " << y[i] << std::endl;
 			}
 		}
 		break;
 		case CLUSTER_CITY_TYPE:
 		{
 			int num_clusters = 3 + rand() % 5;
+			std::cout << "Generating " << num_clusters << " clusters." << std::endl;
 			
 			double *myxs = new double[num_clusters];
 			double *myys = new double[num_clusters];
 			for (int i=0;i<num_clusters;i++)
 			{
-				myxs[i] = 10 * (rand() / (double) RAND_MAX);
-				myys[i] = 10 * (rand() / (double) RAND_MAX);
+				myxs[i] = 15 * (rand() / (double) RAND_MAX);
+				myys[i] = 15 * (rand() / (double) RAND_MAX);
+				
+				std::cout << "cluster " << i << " is at (" << std::setw(12) << myxs[i] << ", " << std::setw(12) << myys[i] << ")" << std::endl;
 			}
 			
 			for (int i=0;i<n;i++)
@@ -103,8 +102,6 @@ void generate_points(city_type t, int n, double *x, double *y)
 				int ndx = rand() % num_clusters;
 				x[i] += myxs[ndx];
 				y[i] += myys[ndx];
-				
-				std::cout << x[i] << ", " << y[i] << std::endl;
 			}
 			
 			delete[] myxs;
@@ -112,7 +109,6 @@ void generate_points(city_type t, int n, double *x, double *y)
 		}
 		break;
 	}
-	std::cout << "pi=" << PI << std::endl;
 }
 
 

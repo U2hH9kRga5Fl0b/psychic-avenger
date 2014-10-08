@@ -2,25 +2,22 @@
 
 #include "common.h"
 
+#include <float.h>
+
 #include <iomanip>
 
 solution::solution(city *c_) :
 	path{new int[c_->num_cities]},
-	already_serviced{new bool[c_->num_cities]},
+	serviced_index{new int[c_->num_cities]},
 	c{c_}
 {
-	int n = c_->num_cities;
-	for (int i=0;i<n;i++)
-	{
-		already_serviced[i] = 0;
-		path[i] = -1;
-	}
+	empty();
 }
 
 solution::~solution()
 {
 	delete[] path;
-	delete[] already_serviced;
+	delete[] serviced_index;
 }
 
 
@@ -50,28 +47,6 @@ distance solution::get_cost() const
 	return cost;
 }
 
-int solution::get_num_serviced() const
-{
-	int n = c->num_cities;
-	for (int i=0;i<n;i++)
-	{
-		if (path[i] < 0)
-		{
-			return i;
-		}
-	}
-	return n;
-}
-
-void solution::plot(const std::string& filename) const
-{
-	for (int i=0; i<c->num_cities; i++)
-	{
-		std::cout << path[i] /*<< ": " << locsx[i] << ", " << locsy[i] */ << std::endl;
-	}
-}
-
-
 solution& solution::operator=(const solution& other)
 {
 	int ncities = c->num_cities;
@@ -86,7 +61,7 @@ solution& solution::operator=(const solution& other)
 	for (int i=0;i<ncities;i++)
 	{
 		path[i] = other.path[i];
-		already_serviced[i] = other.already_serviced[i];
+		serviced_index[i] = other.serviced_index[i];
 	}
 }
 
@@ -103,27 +78,22 @@ bool solution::operator<(const solution& other) const
 	return delta > 0;
 }
 
-
-void solution::random()
+void solution::assign_serviced_indices()
 {
 	int n = c->num_cities;
 	for (int i=0;i<n;i++)
 	{
-		already_serviced[i] = 0;
+		serviced_index[i] = -1;
 	}
 	for (int i=0;i<n;i++)
 	{
-		int ndx;
-		do
+		int stop = path[i];
+		if (path[i] >= 0)
 		{
-			ndx = rand() % n;
-		} while (already_serviced[ndx]);
-		
-		path[i] = ndx;
-		already_serviced[ndx] = 1;
+			serviced_index[path[i]] = i;
+		}
 	}
 }
-
 
 
 std::ostream& operator<<(std::ostream& out, const solution& sol)
@@ -138,7 +108,7 @@ std::ostream& operator<<(std::ostream& out, const solution& sol)
 	out << std::endl;
 	for (int i=0; i<n; i++)
 	{
-		out << std::setw(3) << i << ":"<< std::setw(3) << sol.already_serviced[i] << " ";
+		out << "[" << std::setw(3) << i << ":"<< std::setw(3) << sol.serviced_index[i] << "]";
 	}
 	
 	return out << "]";
@@ -176,7 +146,6 @@ std::ostream& operator<<(std::ostream& out, const solution& sol)
 void solution::insert_at(int stop, int idx)
 {
 	int n = c->num_cities;
-	already_serviced[stop] = 1;
 	
 	int prev = path[idx];
 	path[idx] = stop;
@@ -190,6 +159,8 @@ void solution::insert_at(int stop, int idx)
 		path[i] = prev;
 		prev = next;
 	}
+	
+	assign_serviced_indices();
 }
 
 
@@ -197,12 +168,14 @@ int solution::remove_at(int idx)
 {
 	int n = c->num_cities;
 	int stop = path[idx];
-	already_serviced[stop] = false;
+	
 	for (int i=idx; i < (n-1); i++)
 	{
 		path[i] = path[i+1];
 	}
 	return stop;
+	
+	assign_serviced_indices();
 }
 
 bool solution::is_valid()
@@ -218,23 +191,26 @@ bool solution::is_valid()
 		{
 			if (path[i] < 0 && path[j] >= 0 && i < j)
 			{
+				std::cout << *this << std::endl;
 				std::cout << "positive after -1" << std::endl;
 				trap();
 			}
 			
 			if (path[i] == path[j] && path[i] >= 0 && i != j)
 			{
+				std::cout << *this << std::endl;
 				std::cout << "duplicate!!" << std::endl;
 				trap();
 			}
 		}
 		
-		if (path[i] >= 0 && !already_serviced[path[i]])
+		if (path[i] >= 0 && serviced_index[path[i]] < 0)
 		{
-			std::cout << "already_serviced doesn't know about " << path[i] << " at index " << i << std::endl;
+			std::cout << *this << std::endl;
+			std::cout << "serviced_index doesn't know about " << path[i] << " at index " << i << std::endl;
 			trap();
 		}
-		if (already_serviced[i])
+		if (serviced_index[i] >= 0)
 		{
 			count_alread++;
 		}
@@ -244,21 +220,116 @@ bool solution::is_valid()
 		}
 		if (path[i] >= n)
 		{
+			std::cout << *this << std::endl;
 			std::cout << "path goes to invalid stop!" << std::endl;
+			trap();
+		}
+		if (serviced_index[i] >= 0 && path[serviced_index[i]] != i)
+		{
+			std::cout << *this << std::endl;
+			std::cout << "already serviced index is inaccurate." << std::endl;
 			trap();
 		}
 	}
 	if (count_alread != count_path)
 	{
+		std::cout << *this << std::endl;
 		std::cout << "mismatch" << std::endl;
 		trap();
 	}
 }
 
 
-
-int solution::get_index_of_stop(int stop) const
+void solution::empty()
 {
-	std::cout << "Implement me!" << std::endl;
-	exit(-1);
+	int n = c->num_cities;
+	for (int i=0;i<n;i++)
+	{
+		serviced_index[i] = path[i] = -1;
+	}
+}
+
+
+void solution::random(std::function<void(void)> callback)
+{
+	empty();
+	int n = c->num_cities;
+	
+	int *order = new int[n];
+	
+	for (int i=0; i<n; i++)
+	{
+		order[i] = i;
+	}
+	for (int i=0; i<2*n; i++)
+	{
+		int ndx1 = rand() % n;
+		int ndx2 = rand() % n;
+		
+		int tmp = order[ndx1];
+		order[ndx1] = order[ndx2];
+		order[ndx2] = tmp;
+	}
+	
+	for (int i=0; i<n; i++)
+	{
+		service(i, order[i]);
+		callback();
+	}
+	
+	delete[] order;
+	
+//	assign_serviced_indices();
+}
+
+void solution::nearest(std::function<void(void)> callback)
+{
+	empty();
+	int n = c->num_cities;
+	
+	int* remaining = new int[n];
+	for (int i=0;i<n;i++)
+	{
+		remaining[i] = i;
+	}
+	
+	int prev = rand() % n; // first one chosen at random...
+	service(0, prev);
+	
+	{
+		int tmp = remaining[0];
+		remaining[0] = remaining[prev];
+		remaining[prev] = tmp;
+	}
+	
+	for (int i=1;i<n;i++)
+	{
+		int idxmin = i;
+		double min = c->get_cost(prev, remaining[idxmin]);
+		
+		for (int j=i+1; j<n; j++)
+		{
+			double d = c->get_cost(prev, remaining[j]);
+			if (d < min)
+			{
+				idxmin = j;
+				min = d;
+			}
+		}
+		
+		{
+			int tmp = remaining[i];
+			remaining[i] = remaining[idxmin];
+			remaining[idxmin] = tmp;
+		}
+		
+		service(i, idxmin);
+		
+		prev = remaining[idxmin];
+		
+		callback();
+		is_valid();
+	}
+	
+	delete[] remaining;
 }

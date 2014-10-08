@@ -4,9 +4,11 @@
 
 #include "solution.h"
 
+class tabu_options;
 
 class tabu_option
 {
+	friend tabu_options;
 public:
 	tabu_option(int stop1, int stop2, city* c);
 	virtual ~tabu_option();
@@ -15,6 +17,10 @@ public:
 	virtual double get_improvement(solution* sol) = 0;
 	virtual bool in_bounds(solution* sol) = 0;
 	virtual void apply(solution* sol) = 0;
+	
+	friend std::ostream& operator<<(std::ostream& out, const tabu_option& op);
+protected:
+	virtual std::string get_name() const = 0;
 	
 	int stop1, stop2;
 	double dist;
@@ -35,6 +41,9 @@ public:
 	
 	double get_cost_along_path(solution* sol);
 	bool intersects(solution* sol);
+	
+protected:
+	std::string get_name() const;
 };
 
 // This represents the action of rescheduling stop1 to come after stop2
@@ -47,13 +56,17 @@ public:
 	double get_improvement(solution* sol);
 	bool in_bounds(solution* sol);
 	void apply(solution* sol);
+	
+protected:
+	std::string get_name() const;
+	
 };
 
 // This represents all the actions that could be performed on a city (whether they be good, tabu, or bad).
 class tabu_options
 {
 public:
-	tabu_options();
+	tabu_options(city* c);
 	~tabu_options();
 	
 	tabu_option* get_random_option(solution* sol);
@@ -63,7 +76,6 @@ public:
 	reschedule_tabu_option* reschedule_options;
 };
 
-tabu_options* generate_tabu_options(city* c);
 
 
 

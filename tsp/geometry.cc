@@ -154,9 +154,9 @@ void test_intersect()
 
 bool find_intersecting_paths(solution* sol, int& idx1, int& idx2, int attempts)
 {
-	int n = sol->c->num_cities;
+	int n = sol->get_city()->num_cities;
 	
-	if (sol->path[4] < 0)
+	if (sol->length() <= 4)
 	{
 		// need at least 4 points...
 		return false;
@@ -165,12 +165,12 @@ bool find_intersecting_paths(solution* sol, int& idx1, int& idx2, int attempts)
 	do
 	{
 		idx1 = rand() % (n-1);
-	} while (sol->path[idx1 + 1] < 0 || sol->path[idx1] < 0);
+	} while (sol->get_stop(idx1 + 1) < 0 || sol->get_stop(idx1) < 0);
 	
 	do
 	{
 		idx2 = rand() % (n-1);
-	} while (sol->path[idx2 + 1] < 0 || sol->path[idx2] < 0 || idx1 == idx2);
+	} while (sol->get_stop(idx2 + 1) < 0 || sol->get_stop(idx2) < 0 || idx1 == idx2);
 	
 	if (idx1 > idx2)
 	{
@@ -182,15 +182,19 @@ bool find_intersecting_paths(solution* sol, int& idx1, int& idx2, int attempts)
 	int start1 = idx1;
 	int start2 = idx2 - 1;
 	
+	city* c = sol->get_city();
+	
 	for (int i=0; i<attempts; i++)
 	{
 		double x_inter, y_inter;
 		
+		
+		
 		if (intersect(
-			sol->c->locsx[idx1  ], sol->c->locsy[idx1  ],
-			sol->c->locsx[idx1+1], sol->c->locsy[idx1+1],
-			sol->c->locsx[idx2  ], sol->c->locsy[idx2  ],
-			sol->c->locsx[idx2+1], sol->c->locsy[idx2+1],
+			c->locsx[idx1  ], c->locsy[idx1  ],
+			c->locsx[idx1+1], c->locsy[idx1+1],
+			c->locsx[idx2  ], c->locsy[idx2  ],
+			c->locsx[idx2+1], c->locsy[idx2+1],
 			x_inter, y_inter))
 		{
 		
@@ -204,14 +208,14 @@ bool find_intersecting_paths(solution* sol, int& idx1, int& idx2, int attempts)
 		}
 		
 		idx2++;
-		if (idx2 + 1 >= n || sol->path[idx2 + 1] < 0)
+		if (idx2 + 1 >= n || sol->get_stop(idx2 + 1) < 0)
 		{
 			idx2 = 0;
 		}
 		if (idx2 == start2)
 		{
 			idx1++;
-			if (idx1 + 1 >= n || sol->path[idx1 + 1] < 0)
+			if (idx1 + 1 >= n || sol->get_stop(idx1 + 1) < 0)
 			{
 				idx1 = 0;
 			}
