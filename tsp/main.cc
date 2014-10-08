@@ -133,7 +133,6 @@ void tabu_search(solution *sol, int outerphase = 100000, const std::string&name=
 		tabu_option* option = options.get_best_option(sol);
 		if (option == nullptr)
 		{
-//			std::cout << "Ran out of options..." << std::endl;
 			return;
 		}
 		
@@ -530,13 +529,16 @@ int main(int argc, char **argv)
 	else if (algo == "t" || algo == "tabu")
 	{
 		solution *sol = new solution{c};
-		
-//		sol->random();
+
+#if 1
+		sol->random();
+#else
 		{
 			sol->nearest();
 			viewer v{sol, "nearest"};
 			sol->nearest([&v](){v.update();});
 		}
+#endif
 		tabu_search(sol);
 		show_final_solution(sol, "tabu");
 	}

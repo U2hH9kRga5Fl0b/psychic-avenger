@@ -149,7 +149,7 @@ std::ostream& operator<<(std::ostream& out, const solution& sol)
 	std::cout << s << std::endl;
 #endif
 
-void solution::insert_at(int stop, int idx)
+void solution::insert_at_ndx(int stop, int idx)
 {
 	int n = c->num_cities;
 	
@@ -170,7 +170,7 @@ void solution::insert_at(int stop, int idx)
 }
 
 
-int solution::remove_at(int idx)
+int solution::remove_at_ndx(int idx)
 {
 	int n = c->num_cities;
 	int stop = path[idx];
@@ -179,9 +179,10 @@ int solution::remove_at(int idx)
 	{
 		path[i] = path[i+1];
 	}
-	return stop;
-	
+	path[n-1] = -1;
 	assign_serviced_indices();
+	
+	return stop;
 }
 
 bool solution::is_valid()
@@ -211,7 +212,7 @@ bool solution::is_valid()
 			if (path[i] == path[j] && path[i] >= 0 && i != j)
 			{
 				std::cout << *this << std::endl;
-				std::cout << "duplicate!!" << std::endl;
+				std::cout << "duplicate: " << path[i] << " is at " << i << " and " << j << std::endl;
 				trap();
 			}
 			
@@ -251,6 +252,7 @@ bool solution::is_valid()
 		{
 			std::cout << *this << std::endl;
 			std::cout << "already serviced index is inaccurate." << std::endl;
+			std::cout << "serviced_index[" << i << "]=" << serviced_index[i] <<", but path[" << serviced_index[i] << "]=" << path[serviced_index[i] ] << std::endl;
 			trap();
 		}
 	}

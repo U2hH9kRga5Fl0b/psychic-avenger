@@ -1,6 +1,7 @@
 #include "tabu.h"
 
 #include "geometry.h"
+#include "common.h"
 
 
 #include <float.h>
@@ -201,21 +202,23 @@ void reschedule_tabu_option::apply(solution* sol)
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2);
 	
-	
 	// twice as many operations as we need...
-	int stop = sol->remove_at(ndx1);
+	int stop = sol->remove_at_ndx(ndx1);
 	if (stop != stop1)
 	{
 		std::cout << "This should never happen..." << std::endl;
+		trap();
 	}
+	
+	sol->is_valid();
 	
 	if (ndx1 < ndx2)
 	{
-		sol->insert_at(stop1, ndx2+1);
+		sol->insert_at_ndx(stop1, ndx2  );
 	}
 	else
 	{
-		sol->insert_at(stop1, ndx2);
+		sol->insert_at_ndx(stop1, ndx2+1);
 	}
 	
 	sol->is_valid();
@@ -291,7 +294,7 @@ tabu_option* tabu_options::get_best_option(solution* sol)
 		}
 	}
 	
-	if(0)
+	if(1)
 	{
 		reschedule_tabu_option* resched = reschedule_options;
 		while (resched != nullptr)
@@ -337,7 +340,7 @@ tabu_option* tabu_options::get_random_option(solution* sol)
 	int len = sol->get_city()->num_cities * (sol->get_city()->num_cities - 1) / 2;
 	int num = rand() % len;
 	
-	for (int i=0;i<num || !ran->in_bounds(sol);i++)
+	for (int i=0; i<num || !ran->in_bounds(sol); i++)
 	{
 		ran = ran->next;
 		if (ran == nullptr)

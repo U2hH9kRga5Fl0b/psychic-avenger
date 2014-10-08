@@ -21,8 +21,8 @@ public:
 	distance get_cost() const;
 	bool is_valid();
 	
-	void insert_at(int stop, int idx);
-	int remove_at(int idx);
+	void insert_at_ndx(int stop, int idx);
+	int remove_at_ndx(int idx);
 	
 	int get_num_serviced() const
 	{
@@ -32,7 +32,7 @@ public:
 	{
 		return serviced_index[stop] >= 0;
 	}
-// Be careful when you use this method...
+//	Be careful when you use this method...
 	void service(int index, int stop)
 	{
 //		int oldstop = path[index];
