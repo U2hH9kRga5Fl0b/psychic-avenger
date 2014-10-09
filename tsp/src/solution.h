@@ -71,8 +71,9 @@ public:
 	solution& operator=(const solution& other);
 	bool operator<(const solution& other) const;
 	friend std::ostream& operator<<(std::ostream& out, const solution& sol);
-private:
+	
 	void assign_serviced_indices();
+private:
 	
 	int *serviced_index;
 	int *path;

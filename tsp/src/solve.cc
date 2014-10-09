@@ -37,7 +37,7 @@
 
 
 
-void trap(const std::string& msg)
+void breakpointhere(const std::string& msg)
 {
 	std::cout << "on the way out!" << std::endl;
 	exit(-1);
@@ -459,7 +459,6 @@ void show_final_solution(solution* sol, const std::string& name)
 void print_usage(int argc, char **argv)
 {
 	std::cout << "usage: " << argv[0] << " ("
-
 		<< "  (e|exact) "
 		<< "| (h|nearest)"
 		<< "| (s|subdivide)"
@@ -467,6 +466,7 @@ void print_usage(int argc, char **argv)
 		<< "| (t|tabu)"
 		<< "| (r|random)"
 		<< "| (0|nothing)"
+		<< "| (g|grower)"
 		<< ") <city file>" << std::endl;
 	trap();
 }
@@ -554,6 +554,14 @@ int main(int argc, char **argv)
 	else if (algo == "0" || algo == "nothing")
 	{
 		view_city(c, "city");
+	}
+	else if (algo == "g" || algo == "grower")
+	{
+		solution* sol = new solution{c};
+		viewer v{sol, "growing"};
+		sol->empty();
+		grow(sol, [&v](){v.update();});
+		show_final_solution(sol, "growen");
 	}
 	else
 	{

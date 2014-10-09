@@ -5,7 +5,7 @@
 #include <iostream>
 #include <fstream>
 
-void trap(const std::string& msg)
+void breakpointhere(const std::string& msg)
 {
 	std::cout << "on the way out!" << std::endl;
 	exit(-1);
