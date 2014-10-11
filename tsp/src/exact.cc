@@ -2,6 +2,7 @@
 #include "routines.h"
 
 #include "slvr.h"
+#include "permutation.h"
 
 #include <algorithm>
 

@@ -5,6 +5,7 @@
 #include "subdivider.h"
 #include "viewer.h"
 #include "tabu.h"
+#include "count_minima.h"
 #include "common.h"
 
 #include <iostream>
@@ -122,87 +123,37 @@ void breakpointhere(const std::string& msg)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void tabu_search(solution *sol, int outerphase = 100000, const std::string&name="tabu")
-{
-	tabu_options options{sol->get_city()};
-	viewer v{sol, name, 0};
-	
-	int count = 0;
-	while (count++ < outerphase)
-	{
-		tabu_option* option = options.get_best_option(sol);
-		if (option == nullptr)
-		{
-			return;
-		}
-		
-		double improvement = option->get_improvement(sol);
-		if (improvement >= 0)
-		{
-			std::cout << "This is bad... 1059873" << std::endl;
-			continue;
-		}
-		
-		count = 0;
-		
-		std::cout << "for sol" << *sol << " it appears that the best option is \n" << *option << std::endl;
-		std::cout << "The improvement is " << improvement << std::endl;
-		v.update();
-//		v.pause();
-		
-		double old_cost = sol->get_cost();
-		option->apply(sol);
-		double new_cost = sol->get_cost();
-		
-		std::cout << "And leaves: " << *sol << std::endl;
-		
-		if (abs(new_cost - old_cost - improvement) > 1e-14)
-		{
-			std::cout << "The improvement function needs some work. actual improvement=" << (new_cost - old_cost)
-				<< " calculated improvement=" << improvement << std::endl;
-			trap();
-		}
-		
-		sol->is_valid();
-	}
-}
 
 
-void neighbor_search(solution *sol, int outerphase = 100000, const std::string& name="2opts+resched")
+void anneal(solution *sol, int convergence_threshold, double accept_negative_prob)
 {
 	tabu_options options{sol->get_city()};
-	viewer v{sol, name, 0};
+	viewer v{sol, "2opts+resched anneal", 0};
 	
+	
+	double min_cost = DBL_MAX;
 	int count = 0;
-	while (count++ < outerphase)
+	while (count++ < convergence_threshold)
 	{
 		tabu_option* option = options.get_random_option(sol);
 		if (option == nullptr)
 		{
-			std::cout << "Ran out of options..." << std::endl;
+			std::cout << "No more options" << std::endl;
 			return;
 		}
 		
 		double improvement = option->get_improvement(sol);
-		if (improvement >= 0)
+		if (improvement >= 0 && accept_negative_prob < (rand() / (double) RAND_MAX))
 		{
 			continue;
 		}
 		
-		count = 0;
-		
-		double old_cost = sol->get_cost();
 		option->apply(sol);
-		double new_cost = sol->get_cost();
-		
-		if (abs(new_cost - old_cost - improvement) > 1e-14)
+		if (sol->get_cost() < min_cost)
 		{
-			std::cout << "The improvement function needs some work. actual improvement=" << (new_cost - old_cost)
-				<< " calculated improvement=" << improvement << std::endl;
-			trap();
+			count = 0;
 		}
 		
-		sol->is_valid();
 		v.update();
 	}
 }
@@ -267,7 +218,8 @@ void subdivide_base_case(solution* othersol)
 {
 	std::stringstream s;
 	s << "subdivide " << rand();
-	tabu_search(othersol, 1000, s.str());
+	viewer v{othersol, "basecase"};
+	local_search(othersol, [&v](){v.update();});
 }
 
 
@@ -329,9 +281,16 @@ void subdivide_base_case(solution* othersol)
 
 
 
-void test_code()
+void run_tests(city* c)
 {
-	std::cout << "Tests pass!" << std::endl; // Make sure we have a test :)
+	// run test intersect...
+	// test exact
+	void test_local_search(solution *sol, int tests_per_phase);
+	solution sol{c};
+	sol.random();
+	test_local_search(&sol, 1);
+	
+	std::cout << "Tests pass!" << std::endl;
 }
 
 
@@ -459,14 +418,18 @@ void show_final_solution(solution* sol, const std::string& name)
 void print_usage(int argc, char **argv)
 {
 	std::cout << "usage: " << argv[0] << " ("
-		<< "  (e|exact) "
-		<< "| (h|nearest)"
-		<< "| (s|subdivide)"
-		<< "| (n|neighborhood)"
-		<< "| (t|tabu)"
-		<< "| (r|random)"
-		<< "| (0|nothing)"
+		<< "  (a|anneal)"
+		<< "| (e|exact) "
 		<< "| (g|grower)"
+		<< "| (h|nearest)"
+		<< "| (i|improvements)"
+		<< "| (n|neighborhood)"
+		<< "| (p|print_stats)"
+		<< "| (r|random)"
+		<< "| (s|subdivide)"
+		<< "| (t|tabu)"
+		<< "| (v|verify)"
+		<< "| (0|nothing)"
 		<< ") <city file>" << std::endl;
 	trap();
 }
@@ -482,17 +445,21 @@ int main(int argc, char **argv)
 		print_usage(argc, argv);
 	}
 	
-	std::ifstream infile {std::string{argv[2]}};
-	if (!infile.is_open())
-	{	
-		std::cout << "Unable to open city file!" << std::endl;
-		std::cout << "File = " << argv[2] << std::endl;
-		print_usage(argc, argv);
-	}
-	city* c = load_city(infile);
-	if (c == nullptr)
+	city* c;
+	
 	{
-		print_usage(argc, argv);
+		std::ifstream infile {std::string{argv[2]}};
+		if (!infile.is_open())
+		{
+			std::cout << "Unable to open city file!" << std::endl;
+			std::cout << "File = " << argv[2] << std::endl;
+			print_usage(argc, argv);
+		}
+		c = load_city(infile);
+		if (c == nullptr)
+		{
+			print_usage(argc, argv);
+		}
 	}
 	
 	std::string algo{argv[1]};
@@ -500,7 +467,8 @@ int main(int argc, char **argv)
 	{
 		std::cout << "Finding exact solution." << std::endl;
 		solution* sol = exact(c);
-		show_final_solution(sol, "exact");
+		delete sol;
+//		show_final_solution(sol, "exact");
 	}
 	else if (algo == "h" || algo == "nearest")
 	{
@@ -522,14 +490,6 @@ int main(int argc, char **argv)
 	else if (algo == "n" || algo == "neighborhood")
 	{
 		solution *sol = new solution{c};
-		sol->random();
-		neighbor_search(sol);
-		show_final_solution(sol, "neighborhood");
-	}
-	else if (algo == "t" || algo == "tabu")
-	{
-		solution *sol = new solution{c};
-
 #if 1
 		sol->random();
 #else
@@ -539,8 +499,12 @@ int main(int argc, char **argv)
 			sol->nearest([&v](){v.update();});
 		}
 #endif
-		tabu_search(sol);
-		show_final_solution(sol, "tabu");
+		local_search(sol);
+		show_final_solution(sol, "neighborhood");
+	}
+	else if (algo == "t" || algo == "tabu")
+	{
+		std::cout << "This is no longer implemented" << std::endl;
 	}
 	else if (algo == "r" || algo == "random")
 	{
@@ -553,7 +517,12 @@ int main(int argc, char **argv)
 	}
 	else if (algo == "0" || algo == "nothing")
 	{
+		
+#if GRAPHICS
 		view_city(c, "city");
+#else
+		std::cout << "Graphics are currently disabled." << std::endl;
+#endif
 	}
 	else if (algo == "g" || algo == "grower")
 	{
@@ -563,10 +532,43 @@ int main(int argc, char **argv)
 		grow(sol, [&v](){v.update();});
 		show_final_solution(sol, "growen");
 	}
+	else if (algo == "a" || algo == "anneal")
+	{
+		solution *sol = new solution{c};
+		sol->random();
+		anneal(sol, 100000, .1);
+		show_final_solution(sol, "annealed");
+	}
+	else if (algo == "i" || algo == "improvements")
+	{
+		solution sol{c};
+		sol.random();
+		tabu_options options{sol.get_city()};
+		options.print_improvements(&sol);
+		
+		tabu_option* o;
+		while ((o = options.get_best_option(&sol)) != nullptr)
+		{
+			o->apply(&sol);
+			options.print_improvements(&sol);
+		}
+	}
+	else if (algo == "v" || algo == "verify")
+	{
+		run_tests(c);
+	}
+	else if (algo == "p" || algo == "print_stats")
+	{
+		
+		complete_decision_space(c);
+	}
 	else
 	{
 		print_usage(argc, argv);
 	}
+	
+	delete c;
+	cv::destroyAllWindows();
 	
 	return 0;
 }

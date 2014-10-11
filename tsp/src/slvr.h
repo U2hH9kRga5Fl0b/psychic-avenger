@@ -16,6 +16,7 @@ public:
 	
 	optimizer& operator=(const optimizer& other) = delete;
 private:
+	
 	viewer vbest;
 	viewer vcurrent;
 };

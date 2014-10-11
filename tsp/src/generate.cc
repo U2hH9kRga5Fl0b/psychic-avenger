@@ -64,8 +64,10 @@ int main(int argc, char **argv)
 		}
 		outfile << (*c);
 	}
-	
+
+#if GRAPHICS	
 	view_city(c, "city");
+#endif
 	
 	return 0;
 }

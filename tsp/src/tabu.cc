@@ -3,6 +3,8 @@
 #include "geometry.h"
 #include "common.h"
 
+#include <algorithm>
+
 
 #include <float.h>
 
@@ -28,7 +30,7 @@ namespace
 	}
 }
 
-double swap_tabu_option::get_cost_along_path(solution* sol)
+double swap_tabu_option::get_cost_along_path(solution* sol) const
 {
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2);
@@ -49,7 +51,7 @@ double swap_tabu_option::get_cost_along_path(solution* sol)
 }
 
 
-double swap_tabu_option::get_improvement(solution* sol)
+double swap_tabu_option::get_improvement(solution* sol) const
 {
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2); 
@@ -87,7 +89,7 @@ double swap_tabu_option::get_improvement(solution* sol)
 	return n - o;
 }
 
-bool swap_tabu_option::in_bounds(solution* sol)
+bool swap_tabu_option::in_bounds(solution* sol) const
 {
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2);
@@ -99,7 +101,7 @@ bool swap_tabu_option::in_bounds(solution* sol)
 		priv_in_bounds(ndx1+1, sol);
 }
 
-bool swap_tabu_option::intersects(solution* sol)
+bool swap_tabu_option::intersects(solution* sol) const
 {
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2);
@@ -119,7 +121,7 @@ bool swap_tabu_option::intersects(solution* sol)
 }
 
 
-void swap_tabu_option::apply(solution* sol)
+void swap_tabu_option::apply(solution* sol) const
 {
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2);
@@ -146,7 +148,7 @@ void swap_tabu_option::apply(solution* sol)
 
 
 
-double reschedule_tabu_option::get_improvement(solution* sol)
+double reschedule_tabu_option::get_improvement(solution* sol) const
 {
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2);
@@ -185,7 +187,7 @@ double reschedule_tabu_option::get_improvement(solution* sol)
 	return n - o;
 }
 
-bool reschedule_tabu_option::in_bounds(solution* sol)
+bool reschedule_tabu_option::in_bounds(solution* sol) const
 {
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2);
@@ -197,7 +199,7 @@ bool reschedule_tabu_option::in_bounds(solution* sol)
 		priv_in_bounds(ndx2+1, sol);
 }
 
-void reschedule_tabu_option::apply(solution* sol)
+void reschedule_tabu_option::apply(solution* sol) const
 {
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2);
@@ -353,6 +355,19 @@ tabu_option* tabu_options::get_random_option(solution* sol)
 }
 
 
+void tabu_options::print_improvements(solution* sol)
+{
+	tabu_option* resched = reschedule_options;
+	std::function<void(const tabu_option* op)> f = [&, sol](const tabu_option* op)
+	{
+		if (op == nullptr) { std::cout << std::endl; return; }
+		std::cout << op->in_bounds(sol) ? (op->get_improvement(sol) < 0 ? '1' : '0') : 'X';
+		f(op->next);
+	};
+	f(swap_options);
+}
+
+
 std::ostream& operator<<(std::ostream& out, const tabu_option& op)
 {
 	return out << "[t=" << op.get_name() << "][s1=" << op.stop1 << "][s2=" << op.stop2 << "]";
@@ -366,4 +381,16 @@ std::string swap_tabu_option::get_name() const
 std::string reschedule_tabu_option::get_name() const
 {
 	return "resched";
+}
+
+void local_search(solution *sol, std::function<void(void)> callback)
+{
+	tabu_options options{sol->get_city()};
+	
+	tabu_option* o;
+	while ((o = options.get_best_option(sol)) != nullptr)
+	{
+		o->apply(sol);
+		callback();
+	}
 }

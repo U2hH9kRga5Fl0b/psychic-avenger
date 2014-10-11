@@ -75,12 +75,14 @@ namespace
 viewer::viewer(solution* sol_, const std::string& name, int freq_) :
 	sol{sol_},
 	winname{name},
+#if GRAPHICS
 	mat{cv::Mat::zeros(default_height, default_width, CV_8UC3)},
 	color{
 		255 * (rand() / (double) RAND_MAX),
 		255 * (rand()  / (double) RAND_MAX),
 		255 * (rand()  / (double) RAND_MAX)},
 //	color{255, 255, 255},
+#endif
 	minx{DBL_MAX},
 	miny{DBL_MAX},
 	maxx{-DBL_MAX},
@@ -91,12 +93,15 @@ viewer::viewer(solution* sol_, const std::string& name, int freq_) :
 	get_bounds(c->locsx, c->locsy, c->num_cities, minx, maxx, miny, maxy);
 	
 	std::lock_guard<std::mutex> lock(mut);
-	
+
+#if GRAPHICS	
 	cvNamedWindow(winname.c_str(), CV_WINDOW_AUTOSIZE);
 	
 	location = get_next_loc();
 	locs.at(location).used = true;
 	cvMoveWindow(winname.c_str(), locs.at(location).x, locs.at(location).y);
+	
+#endif
 	
 	
 	cnt = INT_MAX;
@@ -104,23 +109,29 @@ viewer::viewer(solution* sol_, const std::string& name, int freq_) :
 
 void viewer::snapshot(const std::string& filename)
 {
-	
 	std::lock_guard<std::mutex> lock(mut);
+	
+#if GRAPHICS
 	cv::imwrite(filename, mat);
+#endif
 }
 
 viewer::~viewer()
 {
 	std::lock_guard<std::mutex> lock(mut);
+#if GRAPHICS
 	cv::destroyWindow(winname);
+#endif
 	locs.at(location).used = false;
 }
 
 
 
-void viewer::pause()
+void viewer::pause(int length)
 {
-	cv::waitKey(0);
+#if GRAPHICS
+	cv::waitKey(length);
+#endif
 }
 
 void viewer::update()
@@ -141,6 +152,7 @@ void viewer::update()
 	
 	int num_cities = sol->get_city()->num_cities;
 	
+#if GRAPHICS
 	mat = cv::Scalar(0, 0, 0);
 	
 	
@@ -180,8 +192,10 @@ void viewer::update()
 	
 	imshow(winname, mat);
 	cv::waitKey(1);
+#endif
 }
 
+#if GRAPHICS
 void view_city(city* ci, const std::string& name)
 {
 	cvNamedWindow(name.c_str(), CV_WINDOW_AUTOSIZE);
@@ -218,3 +232,4 @@ void view_city(city* bigcity, cv::Mat& mat, int width, int height)
 		cv::circle(mat, next, 2, color);
 	}
 }
+#endif

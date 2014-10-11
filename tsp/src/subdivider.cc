@@ -163,8 +163,10 @@ void draw_square(
 	int height = 500;
 	int width  = 500;
 	cv::Mat mat{cv::Mat::zeros(height, width, CV_8UC3)};
-	
+
+#if GRAPHICS
 	view_city(bigcity, mat, width, height);
+#endif
 	
 	if (!inited)
 	{

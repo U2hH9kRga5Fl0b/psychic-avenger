@@ -8,8 +8,10 @@
 #include <opencv2/opencv.hpp>
 
 
+#if GRAPHICS
 void view_city(city* ci, const std::string& name);
 void view_city(city* bigcity, cv::Mat& mat, int width, int height);
+#endif
 
 class viewer
 {
@@ -20,13 +22,15 @@ public:
 	void update();
 	void snapshot(const std::string& filename);
 	
-	void pause();
+	void pause(int length=0);
 private:
 	solution *sol;
 	std::string winname;
 
+#if GRAPHICS
 	cv::Mat mat;
 	cv::Scalar color;
+#endif
 	
 	double minx, miny, maxx, maxy;
 	

@@ -7,4 +7,13 @@ void breakpointhere(const std::string &msg="death to us all!");
 
 #define DEBUG 1
 
+
+
+
+
+#define GRAPHICS 0
+
+
+
+
 #endif
