@@ -91,17 +91,23 @@ viewer::viewer(solution* sol_, const std::string& name, int freq_) :
 		255 * (rand()  / (double) RAND_MAX),
 		255 * (rand()  / (double) RAND_MAX)},
 //	color{255, 255, 255},
+
+	vid {"output/" + name + ".mpeg", CV_FOURCC('P','I','M','1'), 120, cv::Size(default_width, default_height)},
 #endif
 	minx{DBL_MAX},
 	miny{DBL_MAX},
 	maxx{-DBL_MAX},
 	maxy{-DBL_MAX},
-	freq{freq_}
+	freq{freq_},
+	start{std::chrono::steady_clock::now()},
+	costs{"output/" + name + ".txt"},
+	count{0}
 {
 	city* c = sol->get_city();
 	get_bounds(c->locsx, c->locsy, c->num_cities, minx, maxx, miny, maxy);
 	
 	std::lock_guard<std::mutex> lock(mut);
+	
 
 	location = get_next_loc();
 	locs.at(location).used = true;
@@ -161,6 +167,10 @@ void viewer::update()
 #if GRAPHICS
 	mat = cv::Scalar(0, 0, 0);
 	
+	costs << sol->get_cost() << ' ' << count++ << ' ' << 
+		std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start).count() 
+		<< "; ..." << std::endl;
+	
 	
 	double x = sol->get_city()->locsx[sol->get_stop(0)];
 	double y = sol->get_city()->locsy[sol->get_stop(0)];
@@ -197,6 +207,7 @@ void viewer::update()
 	cv::Scalar invert = cv::Scalar::all(255) - color;
 	
 	cv::putText(mat, s.str(), cv::Point(0,20), CV_FONT_HERSHEY_PLAIN, 1.0, invert);
+	vid.write(mat);
 	
 	imshow(winname, mat);
 	cv::waitKey(1);

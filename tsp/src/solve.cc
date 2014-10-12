@@ -125,7 +125,7 @@ void breakpointhere(const std::string& msg)
 
 
 
-void anneal(solution *sol, int convergence_threshold, double accept_negative_prob)
+void anneal_s(solution *sol, int convergence_threshold, double accept_negative_prob)
 {
 	tabu_options options{sol->get_city()};
 	viewer v{sol, "2opts+resched anneal", 0};
@@ -158,6 +158,104 @@ void anneal(solution *sol, int convergence_threshold, double accept_negative_pro
 		v.update();
 	}
 }
+
+void anneal(solution *sol, int convergence_threshold, double tol, int start_anneal, int dec)
+{
+	tabu_options options{sol->get_city()};
+	viewer v{sol, "2opts+resched anneal", 0};
+	auto l = [&v](){v.update();};
+	
+	double grow_anneal = .9;
+	sol->empty();
+	grow(sol, l, grow_anneal);
+	
+
+	solution* best = new solution{sol->get_city()};	
+	best = sol;
+	double bcost = best->get_cost();
+	
+	for (int anneal = start_anneal; anneal>0; anneal-= dec)
+	{
+		int count = 0;
+		int conv = 0;
+		while(conv++ < convergence_threshold)
+		{
+			count++;
+			(*sol) = (*best);
+			
+			// undo
+			if (0 && rand() % 2)
+			{
+				std::cout << "randomizing" << std::endl;
+				for (int i=0;i<anneal;i++)
+				{
+					const tabu_option* option = options.get_random_option(sol);
+					if (option == nullptr)
+					{
+						std::cout << "No more options" << std::endl;
+						return;
+					}
+					option->apply(sol);
+					v.update();
+				}
+			}
+			else
+			{
+				std::cout << "removing" << std::endl;
+				int start = rand() % (sol->get_city()->num_cities - anneal + 1);
+				for (int i=0; i<anneal; i++)
+				{
+#if 0
+					sol->remove_at_ndx(start);
+#else
+					int stop;
+					int idx;
+					do
+					{
+						stop = rand() % sol->get_city()->num_cities;
+					} while ((idx = sol->get_index_of_stop(stop)) < 0);
+					
+					sol->remove_at_ndx(idx);
+#endif
+					v.update();
+				}
+#if 1
+				int size = sol->length();
+				int mid = (sol->get_city()->num_cities - size) / 2;
+				grow(sol, mid, l, grow_anneal);
+				options.apply_all_improvements(sol, l);
+				grow(sol, l, grow_anneal);
+#else
+				sol->nearest(l);
+#endif
+			}
+			
+			double ncost = sol->get_cost();
+			
+			double reldiff = (bcost - ncost) / bcost;
+			
+			std::cout << "Improving" << std::endl;
+			options.apply_all_improvements(sol, l);
+			std::cout << "relative diff = " << reldiff << " to " << ncost << " from " << bcost << std::endl;
+			
+			if (ncost < bcost)
+			{
+				(*best) = (*sol);
+				bcost = ncost;
+				
+				if (reldiff > tol)
+				{
+					conv = 0;
+				}
+			}
+		}
+		
+		std::cout << "Anneal = " << anneal << " converged in " << count << " iterations.";
+	}
+	
+	(*sol) = (*best);
+}
+
 
 
 
@@ -453,10 +551,10 @@ void print_usage(int argc, char **argv)
 void seed(solution *sol, viewer& v)
 {
 	
-#if 1
+#if 0
 		sol->random();
 #else
-#if 0
+#if 1
 		sol->empty();
 		grow(sol, [&v](){v.update();});
 #else
@@ -567,17 +665,17 @@ int main(int argc, char **argv)
 	else if (algo == "a" || algo == "anneal")
 	{
 		solution *sol = new solution{c};
-		viewer v{sol, "seed anneal"};
-		seed(sol, v);
 		
 //		local_search(sol, [&v](){v.update();});
 		
-		anneal(sol, 1000, 0);
-		anneal(sol, 1000, .6);
-		anneal(sol, 1000, .1);
-		anneal(sol, 1000, .3);
-		anneal(sol, 1000, .01);
-		anneal(sol, 1000, 0);
+//		anneal(sol, 1000, 0);
+//		anneal(sol, 1000, .6);
+///		anneal(sol, 1000, .1);
+//		anneal(sol, 1000, .3);
+//		anneal(sol, 1000, .01);
+//		anneal(sol, 1000, 0);
+		int ann = sol->get_city()->num_cities;
+		anneal(sol, 5, .0001, ann, ann / 10);
 		
 		show_final_solution(sol, "annealed");
 	}

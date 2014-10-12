@@ -7,6 +7,8 @@
 
 #include "solution.h"
 
+#include <chrono>
+
 #include <opencv2/opencv.hpp>
 
 
@@ -32,6 +34,7 @@ private:
 #if GRAPHICS
 	cv::Mat mat;
 	cv::Scalar color;
+	cv::VideoWriter vid;
 #endif
 	
 	double minx, miny, maxx, maxy;
@@ -40,6 +43,10 @@ private:
 	int cnt;
 	
 	int location;
+	
+	std::chrono::steady_clock::time_point start;
+	std::ofstream costs;
+	int count;
 };
 
 #endif

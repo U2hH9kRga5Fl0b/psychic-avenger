@@ -4,7 +4,11 @@
 #include "solution.h"
 
 solution* exact(city *c);
-void grow(solution* sol, std::function<void(void)> callback=[](){});
+
+// If anneal = 0, this always chooses the most optimal point to add.
+// If anneal = .5 it only considers adding each to roughly half the places it could be added.
+void grow(solution* sol, std::function<void(void)> callback=[](){}, double anneal=1.0);
+void grow(solution *sol, int desired, std::function<void(void)> callback, double anneal);
 
 bool intersect(
 	double x1b, double y1b,

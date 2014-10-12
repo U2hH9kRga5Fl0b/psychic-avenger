@@ -19,7 +19,7 @@ typedef enum
 } city_type;
 
 
-void generate_points(city_type type, int n, double *xout, double yout);
+void generate_points(city_type t, int n, double *x, double *y);
 
 class city
 {

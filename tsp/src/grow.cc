@@ -6,13 +6,14 @@
 namespace
 {
 
-bool get_cost(
+bool find_best_location_to_add(
 	// the solution, and how many requests it has already serviced
 	const solution*sol, int len,
 	// the one we are trying to add
 	int additional,
 	// the place to add it, and the cost of adding it
-	int& location, double& min_cost)
+	int& location, double& min_cost,
+	double anneal)
 {
 //	std::cout << "Going to grow \n" << *sol << "\n with additional=" << additional << std::endl;
 	
@@ -33,8 +34,10 @@ bool get_cost(
 		location = len;
 	}
 	
-	// consider each place to add it...
-	for (int i=1; i<len; i++)
+	int stop = std::min((int) (anneal * len), len);
+	
+	// consider several places to put it...
+	for (int i=1; i<stop; i++)
 	{
 //		std::cout << "?? add it at " << i << std::endl;
 		
@@ -67,9 +70,11 @@ bool get_cost(
 	return improved;
 }
 
+}
 
 
-void grow(solution *sol, int desired, std::function<void(void)> callback)
+
+void grow(solution *sol, int desired, std::function<void(void)> callback, double anneal)
 {
 	city* c = sol->get_city();
 	
@@ -114,11 +119,15 @@ void grow(solution *sol, int desired, std::function<void(void)> callback)
 		int place_to_add = -1;
 		int index_to_add = -1;
 		
+	
+		std::random_shuffle(&remaining[i], &remaining[rem]);
+	
 		for (int j=i; j<rem; j++)
 		{
-			if (get_cost(sol, len+i,
+			if (find_best_location_to_add(sol, len+i,
 				remaining[j],
-				place_to_add, min_cost))
+				place_to_add, min_cost,
+				anneal))
 			{
 				index_to_add = j;
 			}
@@ -153,9 +162,7 @@ void grow(solution *sol, int desired, std::function<void(void)> callback)
 }
 
 
-}
-
-void grow(solution* sol, std::function<void(void)> callback)
+void grow(solution* sol, std::function<void(void)> callback, double anneal)
 {
-	grow(sol, sol->get_city()->num_cities, callback);
+	grow(sol, sol->get_city()->num_cities, callback, anneal);
 }

@@ -5,7 +5,7 @@ archivefile=objects/archive.a
 main_method_files=""
 
 
-CFLAGS=" -flto -pthread -g3 -c -std=c++11 -I/usr/include/opencv -I$(pwd)/src"
+CFLAGS=" -flto -pthread -g -c -std=c++11 -I/usr/include/opencv -I$(pwd)/src"
 LDFLAGS=" -flto -pthread -lopencv_core -lopencv_highgui"
 
 #rm -rf objects
