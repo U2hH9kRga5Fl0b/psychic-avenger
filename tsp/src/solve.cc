@@ -130,12 +130,13 @@ void anneal(solution *sol, int convergence_threshold, double accept_negative_pro
 	tabu_options options{sol->get_city()};
 	viewer v{sol, "2opts+resched anneal", 0};
 	
+	std::cout << "P(hurt myself) = " << accept_negative_prob << std::endl;
 	
 	double min_cost = DBL_MAX;
 	int count = 0;
 	while (count++ < convergence_threshold)
 	{
-		tabu_option* option = options.get_random_option(sol);
+		const tabu_option* option = options.get_random_option(sol);
 		if (option == nullptr)
 		{
 			std::cout << "No more options" << std::endl;
@@ -143,7 +144,7 @@ void anneal(solution *sol, int convergence_threshold, double accept_negative_pro
 		}
 		
 		double improvement = option->get_improvement(sol);
-		if (improvement >= 0 && accept_negative_prob < (rand() / (double) RAND_MAX))
+		if (improvement < 0 && accept_negative_prob < (rand() / (double) RAND_MAX))
 		{
 			continue;
 		}
@@ -406,11 +407,26 @@ void run_tests(city* c)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+namespace
+{
+	std::chrono::system_clock::time_point start_time;
+
+void print_time(const std::string& name="unnamed")
+{
+	std::cout << "for '" << name << "' time=" << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start_time).count() <<  " milliseconds." << std::endl;
+}
+
 void show_final_solution(solution* sol, const std::string& name)
 {
+	print_time(name);
+	
+#if GRAPHICS
 	viewer v{sol, name};
 	v.update();
 	v.pause();
+#else
+	std::cout << *sol << std::endl;
+#endif
 	delete sol;
 }
 
@@ -434,10 +450,28 @@ void print_usage(int argc, char **argv)
 	trap();
 }
 
+void seed(solution *sol, viewer& v)
+{
+	
+#if 1
+		sol->random();
+#else
+#if 0
+		sol->empty();
+		grow(sol, [&v](){v.update();});
+#else
+		sol->nearest([&v](){v.update();});
+#endif
+#endif
+	
+}
+
+}
+
 int main(int argc, char **argv)
 {
-//	srand(time(nullptr));
-	srand(5000014);
+	srand(time(nullptr));
+//	srand(5000014);
 //	test_intersect();
 	
 	if (argc != 3)
@@ -462,13 +496,21 @@ int main(int argc, char **argv)
 		}
 	}
 	
+	start_time = std::chrono::system_clock::now();
+	
 	std::string algo{argv[1]};
 	if (algo == "e" || algo == "exact")
 	{
 		std::cout << "Finding exact solution." << std::endl;
-		solution* sol = exact(c);
-		delete sol;
-//		show_final_solution(sol, "exact");
+		show_final_solution(exact(c), "exact");
+	}
+	else if (algo == "g" || algo == "grower")
+	{
+		solution* sol = new solution{c};
+		viewer v{sol, "growing"};
+		sol->empty();
+		grow(sol, [&v](){v.update();});
+		show_final_solution(sol, "growen");
 	}
 	else if (algo == "h" || algo == "nearest")
 	{
@@ -490,21 +532,19 @@ int main(int argc, char **argv)
 	else if (algo == "n" || algo == "neighborhood")
 	{
 		solution *sol = new solution{c};
-#if 1
-		sol->random();
-#else
-		{
-			sol->nearest();
-			viewer v{sol, "nearest"};
-			sol->nearest([&v](){v.update();});
-		}
-#endif
-		local_search(sol);
+		viewer v{sol, "current neighbor"};
+		seed(sol, v);
+		local_search(sol, [&v]() {v.update();});
 		show_final_solution(sol, "neighborhood");
 	}
 	else if (algo == "t" || algo == "tabu")
 	{
-		std::cout << "This is no longer implemented" << std::endl;
+		solution* sol = new solution{c};
+		viewer v{sol, "smpl tabu"};
+		seed(sol, v);
+		tabu_options options{c};
+		options.apply_all_improvements(sol, [&v](){v.update();});
+		show_final_solution(sol, "tabu");
 	}
 	else if (algo == "r" || algo == "random")
 	{
@@ -524,19 +564,21 @@ int main(int argc, char **argv)
 		std::cout << "Graphics are currently disabled." << std::endl;
 #endif
 	}
-	else if (algo == "g" || algo == "grower")
-	{
-		solution* sol = new solution{c};
-		viewer v{sol, "growing"};
-		sol->empty();
-		grow(sol, [&v](){v.update();});
-		show_final_solution(sol, "growen");
-	}
 	else if (algo == "a" || algo == "anneal")
 	{
 		solution *sol = new solution{c};
-		sol->random();
-		anneal(sol, 100000, .1);
+		viewer v{sol, "seed anneal"};
+		seed(sol, v);
+		
+//		local_search(sol, [&v](){v.update();});
+		
+		anneal(sol, 1000, 0);
+		anneal(sol, 1000, .6);
+		anneal(sol, 1000, .1);
+		anneal(sol, 1000, .3);
+		anneal(sol, 1000, .01);
+		anneal(sol, 1000, 0);
+		
 		show_final_solution(sol, "annealed");
 	}
 	else if (algo == "i" || algo == "improvements")
@@ -544,23 +586,26 @@ int main(int argc, char **argv)
 		solution sol{c};
 		sol.random();
 		tabu_options options{sol.get_city()};
-		options.print_improvements(&sol);
 		
-		tabu_option* o;
+		const tabu_option* o;
 		while ((o = options.get_best_option(&sol)) != nullptr)
 		{
-			o->apply(&sol);
 			options.print_improvements(&sol);
+			options.sort(&sol);
+
+			o->apply(&sol);
 		}
 	}
 	else if (algo == "v" || algo == "verify")
 	{
 		run_tests(c);
+		print_time();
 	}
 	else if (algo == "p" || algo == "print_stats")
 	{
 		
 		complete_decision_space(c);
+		print_time();
 	}
 	else
 	{
@@ -568,7 +613,6 @@ int main(int argc, char **argv)
 	}
 	
 	delete c;
-	cv::destroyAllWindows();
 	
 	return 0;
 }

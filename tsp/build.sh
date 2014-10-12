@@ -6,8 +6,7 @@ main_method_files=""
 
 
 CFLAGS=" -flto -pthread -g3 -c -std=c++11 -I/usr/include/opencv -I$(pwd)/src"
-LDFLAGS=" -flto -pthread -lopencv_core -lopencv_highgui "
-
+LDFLAGS=" -flto -pthread -lopencv_core -lopencv_highgui"
 
 #rm -rf objects
 mkdir objects

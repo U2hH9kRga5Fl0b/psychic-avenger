@@ -3,6 +3,8 @@
 #ifndef VIEWER_H_
 #define VIEWER_H_
 
+#include "common.h"
+
 #include "solution.h"
 
 #include <opencv2/opencv.hpp>

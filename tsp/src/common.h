@@ -2,6 +2,8 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
+#include <string>
+
 void breakpointhere(const std::string &msg="death to us all!");
 #define trap()  do { breakpointhere( ); __builtin_unreachable ();} while(0);
 
@@ -11,7 +13,7 @@ void breakpointhere(const std::string &msg="death to us all!");
 
 
 
-#define GRAPHICS 0
+#define GRAPHICS 1
 
 
 

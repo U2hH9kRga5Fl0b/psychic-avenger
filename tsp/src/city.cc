@@ -3,6 +3,7 @@
 #include "city.h"
 #include "common.h"
 
+#include <random>
 #include <cmath>
 #include <iostream>
 #include <cfloat>
@@ -52,6 +53,9 @@ city* load_city(std::istream& in)
 
 void generate_points(city_type t, int n, double *x, double *y)
 {
+	double cone_factor = .5;
+	double cone_start = 10 * rand() / (double) RAND_MAX;
+	
 	const double PI = std::atan(1.0)*4;
 	switch(t)
 	{
@@ -69,7 +73,7 @@ void generate_points(city_type t, int n, double *x, double *y)
 			for (int i=0;i<n;i++)
 			{
 				double radius = .9 + .2 * (rand() / (double) RAND_MAX);
-				double theta = 2 * PI * (rand() / (double) RAND_MAX);
+				double theta = cone_start + 2 * PI * cone_factor * (rand() / (double) RAND_MAX);
 				
 				x[i] = radius * std::cos(theta);
 				y[i] = radius * std::sin(theta);
@@ -106,6 +110,33 @@ void generate_points(city_type t, int n, double *x, double *y)
 			
 			delete[] myxs;
 			delete[] myys;
+		}
+		break;
+		case RADIAL_CITY_TYPE:
+		{
+			std::default_random_engine generator;
+			std::normal_distribution<double> distribution(0.0, 1.0);
+			
+			for (int i=0;i<n;i++)
+			{
+				double radius = distribution(generator);
+				double theta = cone_start + 2 * PI * cone_factor * (rand() / (double) RAND_MAX);
+				
+				x[i] = radius * std::cos(theta);
+				y[i] = radius * std::sin(theta);
+			}
+		}
+		break;
+		case SPIRAL_CITY_TYPE:
+		{
+			for (int i=0;i<n;i++)
+			{
+				double t = 50 * (rand() / (double) (RAND_MAX));
+				double out = 1;
+				
+				x[i] = t * std::cos(t / out);
+				y[i] = t * std::sin(t / out);
+			}
 		}
 		break;
 	}

@@ -59,7 +59,7 @@ namespace
 			}
 		}
 		
-		for (int i=0;i<locs.size();i++)
+		for (int i=0; i<locs.size(); i++)
 		{
 			if (!locs.at(i).used)
 			{
@@ -70,6 +70,15 @@ namespace
 		std::cout << "No more available locations for a screen!";
 		trap();
 	}
+}
+
+void release_viewing_resources()
+{
+#if GRAPHICS
+	cv::destroyAllWindows();
+#endif
+	locs.clear();
+//	pthread_mutex_destroy(&mut);
 }
 
 viewer::viewer(solution* sol_, const std::string& name, int freq_) :
@@ -94,15 +103,13 @@ viewer::viewer(solution* sol_, const std::string& name, int freq_) :
 	
 	std::lock_guard<std::mutex> lock(mut);
 
-#if GRAPHICS	
-	cvNamedWindow(winname.c_str(), CV_WINDOW_AUTOSIZE);
-	
 	location = get_next_loc();
 	locs.at(location).used = true;
+	
+#if GRAPHICS	
+	cvNamedWindow(winname.c_str(), CV_WINDOW_AUTOSIZE);
 	cvMoveWindow(winname.c_str(), locs.at(location).x, locs.at(location).y);
-	
 #endif
-	
 	
 	cnt = INT_MAX;
 }
@@ -110,7 +117,6 @@ viewer::viewer(solution* sol_, const std::string& name, int freq_) :
 void viewer::snapshot(const std::string& filename)
 {
 	std::lock_guard<std::mutex> lock(mut);
-	
 #if GRAPHICS
 	cv::imwrite(filename, mat);
 #endif
@@ -188,10 +194,14 @@ void viewer::update()
 	std::stringstream s;
 	s << "cost=" << sol->get_cost();
 	
-	cv::putText(mat, s.str(), cv::Point(0,20), CV_FONT_HERSHEY_PLAIN, 1.0, color);
+	cv::Scalar invert = cv::Scalar::all(255) - color;
+	
+	cv::putText(mat, s.str(), cv::Point(0,20), CV_FONT_HERSHEY_PLAIN, 1.0, invert);
 	
 	imshow(winname, mat);
 	cv::waitKey(1);
+#else
+//	std::cout << (*sol) << std::endl;
 #endif
 }
 
@@ -227,7 +237,7 @@ void view_city(city* bigcity, cv::Mat& mat, int width, int height)
 		double x = bigcity->locsx[i];
 		double y = bigcity->locsy[i];
 		x = width  * (x - xmin) / (xmax - xmin);
-		y = height * (y - ymin) / (ymax - xmin);
+		y = height * (y - ymin) / (ymax - ymin);
 		cv::Point next{(int)x, (int)y};
 		cv::circle(mat, next, 2, color);
 	}

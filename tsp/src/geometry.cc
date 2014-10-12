@@ -77,6 +77,7 @@ bool intersect(
 
 void test_intersect()
 {
+#if GRAPHICS
 	cv::Scalar color1{
 		255 * (rand() / (double) RAND_MAX),
 		255 * (rand()  / (double) RAND_MAX),
@@ -148,6 +149,9 @@ void test_intersect()
 		cv::imshow("test", mat);
 		cv::waitKey(2000);
 	}
+#else
+	std::cout << "Unable to test intersect without graphics." << std::endl;
+#endif
 }
 
 

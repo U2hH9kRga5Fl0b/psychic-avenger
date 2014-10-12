@@ -13,7 +13,7 @@ void breakpointhere(const std::string& msg)
 
 void print_usage(int argc, char **argv)
 {
-	std::cout << "usage: " << argv[0] << " (u|k|c) <num_cities> <outfile>" << std::endl;
+	std::cout << "usage: " << argv[0] << " (u|k|c|r|s) <num_cities> <outfile>" << std::endl;
 	trap();
 }
 
@@ -51,6 +51,12 @@ int main(int argc, char **argv)
 		case 'c':
 			c = new city{CIRCLE_CITY_TYPE, num_stops};
 			break;
+		case 'r':
+			c = new city{RADIAL_CITY_TYPE, num_stops};
+			break;
+		case 's':
+			c = new city{SPIRAL_CITY_TYPE, num_stops};
+			break;
 		default:
 			print_usage(argc, argv);
 	}
@@ -67,6 +73,8 @@ int main(int argc, char **argv)
 
 #if GRAPHICS	
 	view_city(c, "city");
+#else
+	std::cout << *c << std::endl;
 #endif
 	
 	return 0;

@@ -8,29 +8,35 @@
 
 #include <float.h>
 
-tabu_option::tabu_option(int stop1_, int stop2_, city* c) : 
+tabu_option::tabu_option(int stop1_, int stop2_, city* c, const tabu_option *n) : 
 	stop1{stop1_},
 	stop2{stop2_},
 	dist{c->get_cost(stop1_,stop2_)},
-	next{nullptr} {}
-tabu_option::~tabu_option() { delete next; }
+	next{n} {}
 
-swap_tabu_option::swap_tabu_option(int stop1, int stop2, city* c) : tabu_option{stop1, stop2, c} {}
+tabu_option::~tabu_option()
+{
+	// Does this causes a stack overflow for large TSP problems:
+	// delete next;
+	// Instead, there is a while loop in the tabu_options class.
+}
+
+swap_tabu_option::swap_tabu_option(int stop1, int stop2, city* c, const tabu_option *n) : tabu_option{stop1, stop2, c, n} {}
 swap_tabu_option::~swap_tabu_option() {}
 
-reschedule_tabu_option::reschedule_tabu_option(int stop1, int stop2, city* c) : tabu_option{stop1, stop2, c} {}
+reschedule_tabu_option::reschedule_tabu_option(int stop1, int stop2, city* c, const tabu_option *n) : tabu_option{stop1, stop2, c, n} {}
 reschedule_tabu_option::~reschedule_tabu_option() {}
 
 
 namespace
 {
-	bool priv_in_bounds(int ndx, solution* sol)
+	bool priv_in_bounds(int ndx, const solution* sol)
 	{
 		return ndx >= 0 && ndx < sol->get_city()->num_cities && sol->get_stop(ndx) >= 0;
 	}
 }
 
-double swap_tabu_option::get_cost_along_path(solution* sol) const
+double swap_tabu_option::get_cost_along_path(const solution* sol) const
 {
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2);
@@ -51,7 +57,7 @@ double swap_tabu_option::get_cost_along_path(solution* sol) const
 }
 
 
-double swap_tabu_option::get_improvement(solution* sol) const
+double swap_tabu_option::get_improvement(const solution* sol) const
 {
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2); 
@@ -68,40 +74,47 @@ double swap_tabu_option::get_improvement(solution* sol) const
 		ndx2 = tmp;
 	}
 	
+	
+	
+	
 	// get previous cost
-	double o = 
-		c->get_cost(
+	double o = 0.0;
+	// get new cost
+	double n = 0.0;
+	
+	bool has_prev_point = ndx1 > 0;
+	if (has_prev_point)
+	{
+		o += c->get_cost(
 			sol->get_stop(ndx1-1),
-			sol->get_stop(ndx1  )) + 
-		c->get_cost(
+			sol->get_stop(ndx1  ));
+		
+		n += c->get_cost(
+			sol->get_stop(ndx1-1),
+			sol->get_stop(ndx2  ));
+	}
+	
+	bool has_next_point = ndx2 + 1 < c->num_cities && sol->get_stop(ndx2+1) >= 0;
+	if (has_next_point)
+	{
+		o += c->get_cost(
 			sol->get_stop(ndx2  ),
 			sol->get_stop(ndx2+1));
-	// get new cost
-	double n = 
-		c->get_cost(
-			sol->get_stop(ndx1-1),
-			sol->get_stop(ndx2  )) + 
-		c->get_cost(
+		n +=  c->get_cost(
 			sol->get_stop(ndx1  ),
 			sol->get_stop(ndx2+1));
-	
+	}
 	
 	return n - o;
 }
 
-bool swap_tabu_option::in_bounds(solution* sol) const
+bool swap_tabu_option::in_bounds(const solution* sol) const
 {
-	int ndx1 = sol->get_index_of_stop(stop1);
-	int ndx2 = sol->get_index_of_stop(stop2);
-	
-	return
-		priv_in_bounds(ndx2-1, sol) &&
-		priv_in_bounds(ndx2+1, sol) && 
-		priv_in_bounds(ndx1-1, sol) &&
-		priv_in_bounds(ndx1+1, sol);
+	return sol->get_index_of_stop(stop1) >= 0 &&
+	       sol->get_index_of_stop(stop2) >= 0;
 }
 
-bool swap_tabu_option::intersects(solution* sol) const
+bool swap_tabu_option::intersects(const solution* sol) const
 {
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2);
@@ -148,7 +161,7 @@ void swap_tabu_option::apply(solution* sol) const
 
 
 
-double reschedule_tabu_option::get_improvement(solution* sol) const
+double reschedule_tabu_option::get_improvement(const solution* sol) const
 {
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2);
@@ -187,16 +200,18 @@ double reschedule_tabu_option::get_improvement(solution* sol) const
 	return n - o;
 }
 
-bool reschedule_tabu_option::in_bounds(solution* sol) const
+bool reschedule_tabu_option::in_bounds(const solution* sol) const
 {
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2);
 	
-	return 
+	bool ret =
 		priv_in_bounds(ndx1-1, sol) &&
 		priv_in_bounds(ndx1+1, sol) &&
 		priv_in_bounds(ndx2  , sol) &&
 		priv_in_bounds(ndx2+1, sol);
+	
+	return ret;
 }
 
 void reschedule_tabu_option::apply(solution* sol) const
@@ -246,8 +261,7 @@ tabu_options::tabu_options(city* c) : swap_options{nullptr}, reschedule_options{
 				continue;
 			}
 			
-			reschedule_tabu_option* r = new reschedule_tabu_option{i, j, c};
-			r->next = reschedule_options;
+			reschedule_tabu_option* r = new reschedule_tabu_option{i, j, c, reschedule_options};
 			reschedule_options = r;
 			
 			if (j < i)
@@ -255,22 +269,34 @@ tabu_options::tabu_options(city* c) : swap_options{nullptr}, reschedule_options{
 				continue;
 			}
 			
-			swap_tabu_option* s = new swap_tabu_option{i, j, c};
-			s->next = swap_options;
+			swap_tabu_option* s = new swap_tabu_option{i, j, c, swap_options};
 			swap_options = s;
 		}
 	}
 }
-tabu_options::~tabu_options() { delete swap_options; delete reschedule_options; }
+tabu_options::~tabu_options()
+{
+	auto delop = [](const tabu_option* op)
+	{
+		while (op != nullptr)
+		{
+			const tabu_option* c = op;
+			op = op->next;
+			delete c;
+		}
+	};
+	delop(swap_options);
+	delop(reschedule_options);
+}
 
-tabu_option* tabu_options::get_best_option(solution* sol)
+const tabu_option* tabu_options::get_best_option(const solution* sol)
 {
 	double best_improvement = DBL_MAX;
-	tabu_option* best = nullptr;
+	const tabu_option* best = nullptr;
 	
 	if(1)
 	{
-		swap_tabu_option* swap = swap_options;
+		const swap_tabu_option* swap = swap_options;
 		while (swap != nullptr)
 		{
 			if (!swap->in_bounds(sol))
@@ -296,9 +322,9 @@ tabu_option* tabu_options::get_best_option(solution* sol)
 		}
 	}
 	
-	if(1)
+	if(0)
 	{
-		reschedule_tabu_option* resched = reschedule_options;
+		const reschedule_tabu_option* resched = reschedule_options;
 		while (resched != nullptr)
 		{
 			if (!resched->in_bounds(sol))
@@ -329,18 +355,18 @@ tabu_option* tabu_options::get_best_option(solution* sol)
 
 
 
-tabu_option* tabu_options::get_random_option(solution* sol)
+const tabu_option* tabu_options::get_random_option(const solution* sol)
 {
 	if (sol->get_num_serviced() < 5)
 	{
 		return nullptr;
 	}
 	
-	tabu_option *start = (rand() % 2) ? (tabu_option *)reschedule_options : (tabu_option *)swap_options;
-	tabu_option *ran = start;
+	const tabu_option *start = (rand() % 2) ? (tabu_option *)reschedule_options : (tabu_option *)swap_options;
+	const tabu_option *ran = start;
 	
-	int len = sol->get_city()->num_cities * (sol->get_city()->num_cities - 1) / 2;
-	int num = rand() % len;
+	const int len = sol->get_city()->num_cities * (sol->get_city()->num_cities - 1) / 2;
+	const int num = rand() % len;
 	
 	for (int i=0; i<num || !ran->in_bounds(sol); i++)
 	{
@@ -355,16 +381,41 @@ tabu_option* tabu_options::get_random_option(solution* sol)
 }
 
 
-void tabu_options::print_improvements(solution* sol)
+void tabu_options::print_improvements(const solution* sol) const
 {
-	tabu_option* resched = reschedule_options;
-	std::function<void(const tabu_option* op)> f = [&, sol](const tabu_option* op)
+	const tabu_option* resched = reschedule_options;
+	auto pri = [sol](const tabu_option* op)
 	{
-		if (op == nullptr) { std::cout << std::endl; return; }
-		std::cout << op->in_bounds(sol) ? (op->get_improvement(sol) < 0 ? '1' : '0') : 'X';
-		f(op->next);
+		while (op != nullptr)
+		{
+			if (op->in_bounds(sol))
+			{
+				
+				if (op->get_improvement(sol) < 0.0)
+				{
+					std::cout << '1';
+				}
+				else
+				{
+					std::cout << ' ';
+				}
+			}
+			else
+			{
+				std::cout << 'X' << std::endl;
+			}
+			op = op->next;
+		}
+		std::cout << std::endl;
 	};
-	f(swap_options);
+	// Recursive functions will cause stack overflows...
+//	std::function<void(const tabu_option* op)> f = [&, sol](const tabu_option* op)
+//	{
+//		if (op == nullptr) { std::cout << std::endl; return; }
+//		
+//		f(op->next);
+//	};
+	pri(swap_options);
 }
 
 
@@ -387,10 +438,83 @@ void local_search(solution *sol, std::function<void(void)> callback)
 {
 	tabu_options options{sol->get_city()};
 	
-	tabu_option* o;
+	const tabu_option* o;
 	while ((o = options.get_best_option(sol)) != nullptr)
 	{
 		o->apply(sol);
 		callback();
 	}
 }
+
+
+void tabu_options::sort(const solution* sol)
+{
+	bubble_sort(swap_options, sol);
+	bubble_sort(reschedule_options, sol);
+}
+
+void tabu_options::bubble_sort(const tabu_option* first, const solution* sol)
+{
+	bool changed = true;
+	while (changed)
+	{
+		changed = false;
+		
+		const tabu_option* prev = first;
+		const tabu_option* curr = first->next;
+		const tabu_option* next;
+		
+		while ((next = curr->next) != nullptr)
+		{
+			if (curr->get_improvement(sol) > next->get_improvement(sol))
+			{
+				// p    c     n      n->n
+				((tabu_option*) curr)->next = next->next;
+				((tabu_option*) prev)->next = next;
+				((tabu_option*) next)->next = curr;
+				
+				changed = true;
+				
+				// p n c n->n
+				prev = next;
+				// no need to set curr
+			}
+			else
+			{
+				prev = curr;
+				curr = next;
+			}
+		}
+	}
+}
+
+
+
+
+void tabu_options::apply_all_improvements(solution* sol, std::function<void(void)> callback)
+{
+	auto apply = [sol, &callback](const tabu_option* op) -> bool
+	{
+		bool improved = false;
+		while(op != nullptr)
+		{
+			if (op->in_bounds(sol) && op->get_improvement(sol) < 0.0)
+			{
+				improved = true;
+				op->apply(sol);
+				callback();
+			}
+			op = op->next;
+		}
+		return improved;
+	};
+	
+	bool impr;
+	do
+	{
+		impr = false;
+		while (apply(swap_options))       impr = true;
+		while (apply(reschedule_options)) impr = true;
+	} while (impr);
+}
+

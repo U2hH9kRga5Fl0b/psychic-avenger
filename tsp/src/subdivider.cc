@@ -156,6 +156,7 @@ void draw_square(
 	city* bigcity,
 	double xmini, double xmaxi, double ymini, double ymaxi)
 {
+#if GRAPHICS
 	int n = bigcity->num_cities;
 	double xmin, xmax, ymin, ymax;
 	get_bounds(bigcity->locsx, bigcity->locsy, bigcity->num_cities, xmin, xmax, ymin, ymax);
@@ -164,9 +165,7 @@ void draw_square(
 	int width  = 500;
 	cv::Mat mat{cv::Mat::zeros(height, width, CV_8UC3)};
 
-#if GRAPHICS
 	view_city(bigcity, mat, width, height);
-#endif
 	
 	if (!inited)
 	{
@@ -196,6 +195,9 @@ void draw_square(
 	
 	imshow("current_square", mat);
 	cv::waitKey(1000);
+#else
+	std::cout << xmini << ", " << xmaxi << ", " << ymini << ", " << ymaxi << std::endl;
+#endif
 }
 
 
