@@ -29,9 +29,9 @@ public:
 	~city();
 	
 	void plot(const std::string& file) const;
-	distance get_cost(int i, int j) const { return distances[i * num_cities + j]; }
+	distance get_cost(int i, int j) const { return distances[i * num_stops + j]; }
 	
-	int num_cities;
+	int num_stops;
 	distance *distances;
 //	int num_drivers;
 	double *locsx;

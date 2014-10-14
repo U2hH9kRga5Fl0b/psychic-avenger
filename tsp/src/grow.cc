@@ -81,7 +81,7 @@ void grow(solution *sol, int desired, std::function<void(void)> callback, double
 	if (sol->get_stop(0) < 0)
 	{
 		// It needs to service at least one stop
-		int stop = rand() % c->num_cities;
+		int stop = rand() % c->num_stops;
 		std::cout << "Adding random stop = " << stop << " " << std::endl;
 		sol->insert_at_ndx(stop, 0);
 		
@@ -89,7 +89,7 @@ void grow(solution *sol, int desired, std::function<void(void)> callback, double
 //		std::cout << *sol << std::endl;
 	}
 	
-	int n = c->num_cities;
+	int n = c->num_stops;
 	int len = sol->length();
 	int rem = n - len;
 	    desired = std::min(n, desired);
@@ -164,5 +164,5 @@ void grow(solution *sol, int desired, std::function<void(void)> callback, double
 
 void grow(solution* sol, std::function<void(void)> callback, double anneal)
 {
-	grow(sol, sol->get_city()->num_cities, callback, anneal);
+	grow(sol, sol->get_city()->num_stops, callback, anneal);
 }

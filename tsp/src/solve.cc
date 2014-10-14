@@ -479,7 +479,7 @@ int main(int argc, char **argv)
 	else if (algo == "a" || algo == "anneal")
 	{
 		solution *sol = new solution{c};
-		int ann = sol->get_city()->num_cities;
+		int ann = sol->get_city()->num_stops;
 		anneal(sol, 5, .0001, ann, ann / 2);
 		
 		show_final_solution(sol, "annealed");

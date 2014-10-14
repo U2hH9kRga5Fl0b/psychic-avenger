@@ -65,7 +65,7 @@ void work_backward(solution*sol, int anneal, itemizer& options, viewer& v)
 		case 1:
 		{
 			std::cout << "removing" << std::endl;
-			int start = rand() % (sol->get_city()->num_cities - anneal + 1);
+			int start = rand() % (sol->get_city()->num_stops - anneal + 1);
 			for (int i=0; i<anneal; i++)
 			{
 				sol->remove_at_ndx(start);
@@ -82,7 +82,7 @@ void work_backward(solution*sol, int anneal, itemizer& options, viewer& v)
 				int idx;
 				do
 				{
-					stop = rand() % sol->get_city()->num_cities;
+					stop = rand() % sol->get_city()->num_stops;
 				} while ((idx = sol->get_index_of_stop(stop)) < 0);
 				
 				sol->remove_at_ndx(idx);
@@ -101,7 +101,7 @@ void work_backward(solution*sol, int anneal, itemizer& options, viewer& v)
 	if (1)
 	{
 		int size = sol->length();
-		int mid = (sol->get_city()->num_cities + size) / 2;
+		int mid = (sol->get_city()->num_stops + size) / 2;
 		grow(sol, mid, l, grow_anneal);
 		options.ordered_search(sol, l);
 		grow(sol, l, grow_anneal);

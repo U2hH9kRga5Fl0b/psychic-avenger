@@ -57,7 +57,7 @@ public:
 	city* get_city() const { return c; }
 	int length() const
 	{
-		int n = c->num_cities;
+		int n = c->num_stops;
 		for (int i=0;i<n;i++)
 		{
 			if (path[i] < 0)

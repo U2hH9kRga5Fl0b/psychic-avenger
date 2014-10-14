@@ -7,8 +7,8 @@
 #include <iomanip>
 
 solution::solution(city *c_) :
-	path{new int[c_->num_cities]},
-	serviced_index{new int[c_->num_cities]},
+	path{new int[c_->num_stops]},
+	serviced_index{new int[c_->num_stops]},
 	c{c_}
 {
 	empty();
@@ -31,7 +31,7 @@ distance solution::get_cost() const
 	
 	distance cost = 0;
 	
-	int n = c->num_cities;
+	int n = c->num_stops;
 	
 	for (int i=0;i<n-1; i++)
 	{
@@ -49,8 +49,8 @@ distance solution::get_cost() const
 
 solution& solution::operator=(const solution& other)
 {
-	int ncities = c->num_cities;
-	if (ncities != other.c->num_cities)
+	int ncities = c->num_stops;
+	if (ncities != other.c->num_stops)
 	{
 		std::cout << "assignment to wrong city size." << std::endl;
 		exit(-1);
@@ -80,7 +80,7 @@ bool solution::operator<(const solution& other) const
 
 void solution::assign_serviced_indices()
 {
-	int n = c->num_cities;
+	int n = c->num_stops;
 	for (int i=0;i<n;i++)
 	{
 		serviced_index[i] = -1;
@@ -98,7 +98,7 @@ void solution::assign_serviced_indices()
 
 std::ostream& operator<<(std::ostream& out, const solution& sol)
 {
-	int n = sol.c->num_cities;
+	int n = sol.c->num_stops;
 	
 	out << "[c=" << std::setw(12) << sol.get_cost() << "]\n";
 	
@@ -151,7 +151,7 @@ std::ostream& operator<<(std::ostream& out, const solution& sol)
 
 void solution::insert_at_ndx(int stop, int idx)
 {
-	int n = c->num_cities;
+	int n = c->num_stops;
 	
 	int prev = path[idx];
 	path[idx] = stop;
@@ -172,7 +172,7 @@ void solution::insert_at_ndx(int stop, int idx)
 
 int solution::remove_at_ndx(int idx)
 {
-	int n = c->num_cities;
+	int n = c->num_stops;
 	int stop = path[idx];
 	
 	for (int i=idx; i < (n-1); i++)
@@ -192,7 +192,7 @@ bool solution::is_valid()
 		return true;
 	}
 	
-	int n = c->num_cities;
+	int n = c->num_stops;
 	
 	int count_alread = 0;
 	int count_path = 0;
@@ -267,7 +267,7 @@ bool solution::is_valid()
 
 void solution::empty()
 {
-	int n = c->num_cities;
+	int n = c->num_stops;
 	for (int i=0;i<n;i++)
 	{
 		serviced_index[i] = path[i] = -1;
@@ -278,7 +278,7 @@ void solution::empty()
 void solution::random(std::function<void(void)> callback)
 {
 	empty();
-	int n = c->num_cities;
+	int n = c->num_stops;
 	
 	int *order = new int[n];
 	
@@ -310,7 +310,7 @@ void solution::random(std::function<void(void)> callback)
 void solution::nearest(std::function<void(void)> callback)
 {
 	empty();
-	int n = c->num_cities;
+	int n = c->num_stops;
 	
 	int* remaining = new int[n];
 	for (int i=0; i<n; i++)

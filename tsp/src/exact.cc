@@ -31,7 +31,7 @@ solution* exact(city *c)
 	opt.current.random();
 	opt.best.empty();
 	
-	exact_solution(opt, 0, c->num_cities);
+	exact_solution(opt, 0, c->num_stops);
 	
 	solution* ret = new solution{c};
 	(*ret) = opt.best;

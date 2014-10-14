@@ -32,7 +32,7 @@ namespace
 {
 	bool priv_in_bounds(int ndx, const solution* sol)
 	{
-		return ndx >= 0 && ndx < sol->get_city()->num_cities && sol->get_stop(ndx) >= 0;
+		return ndx >= 0 && ndx < sol->get_city()->num_stops && sol->get_stop(ndx) >= 0;
 	}
 }
 
@@ -94,7 +94,7 @@ double swap_option::get_improvement(const solution* sol) const
 			sol->get_stop(ndx2  ));
 	}
 	
-	bool has_next_point = ndx2 + 1 < c->num_cities && sol->get_stop(ndx2+1) >= 0;
+	bool has_next_point = ndx2 + 1 < c->num_stops && sol->get_stop(ndx2+1) >= 0;
 	if (has_next_point)
 	{
 		o += c->get_cost(
@@ -251,7 +251,7 @@ void resched_option::apply(solution* sol) const
 
 itemizer::itemizer(city* c)
 {
-	int n = c->num_cities;
+	int n = c->num_stops;
 	num_options = 0;
 	for (int i=0; i<n; i++)
 	{

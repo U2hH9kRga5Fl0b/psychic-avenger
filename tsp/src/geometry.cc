@@ -158,7 +158,7 @@ void test_intersect()
 
 bool find_intersecting_paths(solution* sol, int& idx1, int& idx2, int attempts)
 {
-	int n = sol->get_city()->num_cities;
+	int n = sol->get_city()->num_stops;
 	
 	if (sol->length() <= 4)
 	{

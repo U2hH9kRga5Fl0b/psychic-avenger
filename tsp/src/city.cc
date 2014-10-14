@@ -11,8 +11,8 @@
 
 std::ostream& operator<<(std::ostream& out, const city& c)
 {
-	out << c.num_cities << std::endl;
-	for (int i=0;i<c.num_cities;i++)
+	out << c.num_stops << std::endl;
+	for (int i=0;i<c.num_stops;i++)
 	{
 		out << std::setw(12) << c.locsx[i] << "\t" << std::setw(12) << c.locsy[i] << std::endl;
 	}
@@ -53,19 +53,19 @@ city* load_city(std::istream& in)
 
 void city::refresh_distances()
 {
-	for (int i=0; i<num_cities; i++)
+	for (int i=0; i<num_stops; i++)
 	{
-		for (int j=0; j<num_cities; j++)
+		for (int j=0; j<num_stops; j++)
 		{
 			double dx = locsx[i] - locsx[j];
 			double dy = locsy[i] - locsy[j];
-			distances[i * num_cities + j] = sqrt(dx * dx + dy * dy);
+			distances[i * num_stops + j] = sqrt(dx * dx + dy * dy);
 		}
 	}
 }
 
 city::city(int nstops_, double *x, double *y) :
-	num_cities{nstops_},
+	num_stops{nstops_},
 	distances{new distance[nstops_ * nstops_]},
 	locsx{x},
 	locsy{y}
@@ -74,7 +74,7 @@ city::city(int nstops_, double *x, double *y) :
 }
 
 city::city(city_type t, int nstops_) :
-	num_cities{nstops_},
+	num_stops{nstops_},
 	distances{new distance[nstops_ * nstops_]},
 	locsx{new double[nstops_]},
 	locsy{new double[nstops_]}

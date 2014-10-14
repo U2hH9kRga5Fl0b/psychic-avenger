@@ -16,7 +16,7 @@ public:
 	hash(const solution* so) :
 		next{nullptr}
 	{
-		int n = so->get_city()->num_cities;
+		int n = so->get_city()->num_stops;
 		for (int i=0;i<num_hashes;i++)
 		{
 			hashes[i] = primes[i];

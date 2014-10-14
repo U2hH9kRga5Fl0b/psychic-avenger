@@ -13,7 +13,7 @@ void breakpointhere(const std::string& msg)
 
 void print_usage(int argc, char **argv)
 {
-	std::cout << "usage: " << argv[0] << " (u|k|c|r|s) <num_cities> <outfile>" << std::endl;
+	std::cout << "usage: " << argv[0] << " (u|k|c|r|s) <num_stops> <outfile>" << std::endl;
 	trap();
 }
 

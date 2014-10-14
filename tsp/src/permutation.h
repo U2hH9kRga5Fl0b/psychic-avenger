@@ -9,7 +9,7 @@
 class permutation
 {
 public:
-	permutation(solution* sol) : permutation{sol, 0, sol->get_city()->num_cities} {};
+	permutation(solution* sol) : permutation{sol, 0, sol->get_city()->num_stops} {};
 		
 	permutation(solution* sol, int start_, int stop) :
 		start{start_},

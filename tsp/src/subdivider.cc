@@ -49,7 +49,7 @@ namespace
 
 subcity *get_subcity(city *old, double xmin, double xmax, double ymin, double ymax)
 {
-	int n = old->num_cities;
+	int n = old->num_stops;
 	int count = 0;
 	for (int i=0;i<n;i++)
 	{
@@ -94,7 +94,7 @@ void append_to(subcity *subcity, solution *subsol, solution *sol)
 //	std::cout << *subsol << std::endl;
 //	std::cout << "to this: " << std::endl;
 //	std::cout << *sol << std::endl;
-//	for (int i=0;i<subcity->c->num_cities;i++)
+//	for (int i=0;i<subcity->c->num_stops;i++)
 //	{
 //		std::cout << " " << subcity->mapping[i];
 //	}
@@ -108,7 +108,7 @@ void append_to(subcity *subcity, solution *subsol, solution *sol)
 		return;
 	}
 	
-	int n = sol->get_city()->num_cities;
+	int n = sol->get_city()->num_stops;
 	
 	int ndx = sol->length();
 	
@@ -119,7 +119,7 @@ void append_to(subcity *subcity, solution *subsol, solution *sol)
 		return;
 	}
 	
-	int ln = subsol->get_city()->num_cities;
+	int ln = subsol->get_city()->num_stops;
 	
 	for (int i=0; i < ln; i++, ndx++)
 	{
@@ -157,9 +157,9 @@ void draw_square(
 	double xmini, double xmaxi, double ymini, double ymaxi)
 {
 #if GRAPHICS
-	int n = bigcity->num_cities;
+	int n = bigcity->num_stops;
 	double xmin, xmax, ymin, ymax;
-	get_bounds(bigcity->locsx, bigcity->locsy, bigcity->num_cities, xmin, xmax, ymin, ymax);
+	get_bounds(bigcity->locsx, bigcity->locsy, bigcity->num_stops, xmin, xmax, ymin, ymax);
 	
 	int height = 500;
 	int width  = 500;
@@ -207,22 +207,22 @@ city* bigcity_513;
 
 solution *backtrack(city *beginning,
 	double xmin, double xmax, double ymin, double ymax,
-	int max_num_cities,
+	int max_num_stops,
 	void (improve)(solution* s),
 	int& total_num_solved)
 {
-	std::cout << "backtracking to [" << xmin << "," << xmax << "],[" << ymin << "," << ymax << "] with n=" << beginning->num_cities << std::endl;
+	std::cout << "backtracking to [" << xmin << "," << xmax << "],[" << ymin << "," << ymax << "] with n=" << beginning->num_stops << std::endl;
 	std::cout.flush();
 	
 //	std::this_thread::sleep_for(std::chrono::milliseconds{1000});
 	
-	if (beginning->num_cities == 0)
+	if (beginning->num_stops == 0)
 	{
 		return nullptr;
 	}
 	
 	
-	if (beginning->num_cities < max_num_cities)
+	if (beginning->num_stops < max_num_stops)
 	{
 		draw_square(bigcity_513,
 			xmin, xmax, ymin, ymax);
@@ -242,7 +242,7 @@ solution *backtrack(city *beginning,
 	// upper right
 	{
 		subcity *sub = get_subcity(beginning, midx, xmax, midy, ymax);
-		solution* subsol =  backtrack(sub->c, midx, xmax, midy, ymax, max_num_cities, improve, total_num_solved);
+		solution* subsol =  backtrack(sub->c, midx, xmax, midy, ymax, max_num_stops, improve, total_num_solved);
 		append_to(sub, subsol, sol);
 		delete subsol;
 		delete sub;
@@ -250,7 +250,7 @@ solution *backtrack(city *beginning,
 	// upper left
 	{
 		subcity *sub = get_subcity(beginning, xmin, midx, midy, ymax);
-		solution* subsol =  backtrack(sub->c, xmin, midx, midy, ymax, max_num_cities, improve, total_num_solved);
+		solution* subsol =  backtrack(sub->c, xmin, midx, midy, ymax, max_num_stops, improve, total_num_solved);
 		append_to(sub, subsol, sol);
 		delete subsol;
 		delete sub;
@@ -258,7 +258,7 @@ solution *backtrack(city *beginning,
 	// lower left
 	{
 		subcity *sub = get_subcity(beginning, xmin, midx, ymin, midy);
-		solution* subsol =  backtrack(sub->c, xmin, midx, ymin, midy, max_num_cities, improve, total_num_solved);
+		solution* subsol =  backtrack(sub->c, xmin, midx, ymin, midy, max_num_stops, improve, total_num_solved);
 		append_to(sub, subsol, sol);
 		delete subsol;
 		delete sub;
@@ -266,7 +266,7 @@ solution *backtrack(city *beginning,
 	// lower right
 	{
 		subcity *sub = get_subcity(beginning, midx, xmax, ymin, midy);
-		solution* subsol =  backtrack(sub->c, midx, xmax, ymin, midy, max_num_cities, improve, total_num_solved);
+		solution* subsol =  backtrack(sub->c, midx, xmax, ymin, midy, max_num_stops, improve, total_num_solved);
 		append_to(sub, subsol, sol);
 		delete subsol;
 		delete sub;
@@ -278,9 +278,9 @@ solution *backtrack(city *beginning,
 		xmin, xmax, ymin, ymax);
 	improve(sol);
 	
-	if (sol->get_city()->num_cities > total_num_solved)
+	if (sol->get_city()->num_stops > total_num_solved)
 	{
-		total_num_solved = sol->get_city()->num_cities;
+		total_num_solved = sol->get_city()->num_stops;
 		std::cout << "We have now solved a " <<  total_num_solved << " city." << std::endl;
 	}
 	
@@ -294,16 +294,16 @@ solution *backtrack(city *beginning,
 }
 
 
-solution *subdivide_backtrack(city *beginning, void (improve)(solution* s), int max_num_cities)
+solution *subdivide_backtrack(city *beginning, void (improve)(solution* s), int max_num_stops)
 {
 	bigcity_513 = beginning;
 	double xmin_513, xmax_513, ymin_513, ymax_513;
-	get_bounds(beginning->locsx, beginning->locsy, beginning->num_cities,
+	get_bounds(beginning->locsx, beginning->locsy, beginning->num_stops,
 		xmin_513, xmax_513, ymin_513, ymax_513);
 	
 	int total_num_solved = 0;
 	
-	return backtrack(beginning, xmin_513, xmax_513, ymin_513, ymax_513, max_num_cities, improve, total_num_solved);
+	return backtrack(beginning, xmin_513, xmax_513, ymin_513, ymax_513, max_num_stops, improve, total_num_solved);
 }
 
 

@@ -104,7 +104,7 @@ viewer::viewer(solution* sol_, const std::string& name, int freq_) :
 	count{0}
 {
 	city* c = sol->get_city();
-	get_bounds(c->locsx, c->locsy, c->num_cities, minx, maxx, miny, maxy);
+	get_bounds(c->locsx, c->locsy, c->num_stops, minx, maxx, miny, maxy);
 	
 	std::lock_guard<std::mutex> lock(mut);
 	
@@ -162,7 +162,7 @@ void viewer::update()
 		cnt = 0;
 	}
 	
-	int num_cities = sol->get_city()->num_cities;
+	int num_stops = sol->get_city()->num_stops;
 	
 #if GRAPHICS
 	mat = cv::Scalar(0, 0, 0);
@@ -180,7 +180,7 @@ void viewer::update()
 	cv::Point prev((int)x, (int)y);
 	cv::circle(mat, prev, 3, color);
 	
-	for (int i=1; i<num_cities; i++)
+	for (int i=1; i<num_stops; i++)
 	{
 		if (sol->get_stop(i) < 0)
 		{
@@ -234,16 +234,16 @@ void view_city(city* ci, const std::string& name)
 
 void view_city(city* bigcity, cv::Mat& mat, int width, int height)
 {
-	int n = bigcity->num_cities;
+	int n = bigcity->num_stops;
 	double xmin, xmax, ymin, ymax;
-	get_bounds(bigcity->locsx, bigcity->locsy, bigcity->num_cities, xmin, xmax, ymin, ymax);
+	get_bounds(bigcity->locsx, bigcity->locsy, bigcity->num_stops, xmin, xmax, ymin, ymax);
 	
 	cv::Scalar color{
 		255 * (rand() / (double) RAND_MAX),
 		255 * (rand() / (double) RAND_MAX),
 		255 * (rand() / (double) RAND_MAX)};
 	
-	for (int i=0; i<bigcity->num_cities; i++)
+	for (int i=0; i<bigcity->num_stops; i++)
 	{
 		double x = bigcity->locsx[i];
 		double y = bigcity->locsy[i];
