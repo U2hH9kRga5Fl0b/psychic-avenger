@@ -17,4 +17,8 @@ bool intersect(
 	double x2b, double y2b,
 	double x2e, double y2e);
 
+
+void anneal_s(solution *sol, int convergence_threshold, double accept_negative_prob);
+void anneal(solution *sol, int convergence_threshold, double tol, int start_anneal, int dec);
+
 #endif

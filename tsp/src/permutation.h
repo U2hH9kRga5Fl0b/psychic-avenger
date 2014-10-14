@@ -2,7 +2,7 @@
 #define PERMUTATION_H_
 
 #include "solution.h"
-#include "tabu.h"
+#include "item.h"
 
 #include <algorithm>
 

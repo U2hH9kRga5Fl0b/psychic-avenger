@@ -4,7 +4,7 @@
 #include "slvr.h"
 #include "subdivider.h"
 #include "viewer.h"
-#include "tabu.h"
+#include "item.h"
 #include "count_minima.h"
 #include "common.h"
 
@@ -125,200 +125,13 @@ void breakpointhere(const std::string& msg)
 
 
 
-void anneal_s(solution *sol, int convergence_threshold, double accept_negative_prob)
-{
-	tabu_options options{sol->get_city()};
-	viewer v{sol, "2opts+resched anneal", 0};
-	
-	std::cout << "P(hurt myself) = " << accept_negative_prob << std::endl;
-	
-	double min_cost = DBL_MAX;
-	int count = 0;
-	while (count++ < convergence_threshold)
-	{
-		const tabu_option* option = options.get_random_option(sol);
-		if (option == nullptr)
-		{
-			std::cout << "No more options" << std::endl;
-			return;
-		}
-		
-		double improvement = option->get_improvement(sol);
-		if (improvement < 0 && accept_negative_prob < (rand() / (double) RAND_MAX))
-		{
-			continue;
-		}
-		
-		option->apply(sol);
-		if (sol->get_cost() < min_cost)
-		{
-			count = 0;
-		}
-		
-		v.update();
-	}
-}
-
-void anneal(solution *sol, int convergence_threshold, double tol, int start_anneal, int dec)
-{
-	tabu_options options{sol->get_city()};
-	viewer v{sol, "2opts+resched anneal", 0};
-	auto l = [&v](){v.update();};
-	
-	double grow_anneal = .9;
-	sol->empty();
-	grow(sol, l, grow_anneal);
-	
-
-	solution* best = new solution{sol->get_city()};	
-	best = sol;
-	double bcost = best->get_cost();
-	
-	for (int anneal = start_anneal; anneal>0; anneal-= dec)
-	{
-		int count = 0;
-		int conv = 0;
-		while(conv++ < convergence_threshold)
-		{
-			count++;
-			(*sol) = (*best);
-			
-			// undo
-			if (0 && rand() % 2)
-			{
-				std::cout << "randomizing" << std::endl;
-				for (int i=0;i<anneal;i++)
-				{
-					const tabu_option* option = options.get_random_option(sol);
-					if (option == nullptr)
-					{
-						std::cout << "No more options" << std::endl;
-						return;
-					}
-					option->apply(sol);
-					v.update();
-				}
-			}
-			else
-			{
-				std::cout << "removing" << std::endl;
-				int start = rand() % (sol->get_city()->num_cities - anneal + 1);
-				for (int i=0; i<anneal; i++)
-				{
-#if 0
-					sol->remove_at_ndx(start);
-#else
-					int stop;
-					int idx;
-					do
-					{
-						stop = rand() % sol->get_city()->num_cities;
-					} while ((idx = sol->get_index_of_stop(stop)) < 0);
-					
-					sol->remove_at_ndx(idx);
-#endif
-					v.update();
-				}
-#if 1
-				int size = sol->length();
-				int mid = (sol->get_city()->num_cities - size) / 2;
-				grow(sol, mid, l, grow_anneal);
-				options.apply_all_improvements(sol, l);
-				grow(sol, l, grow_anneal);
-#else
-				sol->nearest(l);
-#endif
-			}
-			
-			double ncost = sol->get_cost();
-			
-			double reldiff = (bcost - ncost) / bcost;
-			
-			std::cout << "Improving" << std::endl;
-			options.apply_all_improvements(sol, l);
-			std::cout << "relative diff = " << reldiff << " to " << ncost << " from " << bcost << std::endl;
-			
-			if (ncost < bcost)
-			{
-				(*best) = (*sol);
-				bcost = ncost;
-				
-				if (reldiff > tol)
-				{
-					conv = 0;
-				}
-			}
-		}
-		
-		std::cout << "Anneal = " << anneal << " converged in " << count << " iterations.";
-	}
-	
-	(*sol) = (*best);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
 void subdivide_base_case(solution* othersol)
 {
 	std::stringstream s;
 	s << "subdivide " << rand();
 	viewer v{othersol, "basecase"};
-	local_search(othersol, [&v](){v.update();});
+	itemizer itms{othersol->get_city()};
+	itms.greedy_search(othersol, [&v](){v.update();});
 }
 
 
@@ -568,8 +381,8 @@ void seed(solution *sol, viewer& v)
 
 int main(int argc, char **argv)
 {
-	srand(time(nullptr));
-//	srand(5000014);
+//	srand(time(nullptr));
+	srand(5000014);
 //	test_intersect();
 	
 	if (argc != 3)
@@ -632,7 +445,8 @@ int main(int argc, char **argv)
 		solution *sol = new solution{c};
 		viewer v{sol, "current neighbor"};
 		seed(sol, v);
-		local_search(sol, [&v]() {v.update();});
+		itemizer itms{c};
+		itms.greedy_search(sol, [&v]() {v.update();});
 		show_final_solution(sol, "neighborhood");
 	}
 	else if (algo == "t" || algo == "tabu")
@@ -640,8 +454,8 @@ int main(int argc, char **argv)
 		solution* sol = new solution{c};
 		viewer v{sol, "smpl tabu"};
 		seed(sol, v);
-		tabu_options options{c};
-		options.apply_all_improvements(sol, [&v](){v.update();});
+		itemizer options{c};
+		options.ordered_search(sol, [&v](){v.update();});
 		show_final_solution(sol, "tabu");
 	}
 	else if (algo == "r" || algo == "random")
@@ -665,17 +479,8 @@ int main(int argc, char **argv)
 	else if (algo == "a" || algo == "anneal")
 	{
 		solution *sol = new solution{c};
-		
-//		local_search(sol, [&v](){v.update();});
-		
-//		anneal(sol, 1000, 0);
-//		anneal(sol, 1000, .6);
-///		anneal(sol, 1000, .1);
-//		anneal(sol, 1000, .3);
-//		anneal(sol, 1000, .01);
-//		anneal(sol, 1000, 0);
 		int ann = sol->get_city()->num_cities;
-		anneal(sol, 5, .0001, ann, ann / 10);
+		anneal(sol, 5, .0001, ann, ann / 2);
 		
 		show_final_solution(sol, "annealed");
 	}
@@ -683,9 +488,9 @@ int main(int argc, char **argv)
 	{
 		solution sol{c};
 		sol.random();
-		tabu_options options{sol.get_city()};
+		itemizer options{sol.get_city()};
 		
-		const tabu_option* o;
+		const neighbor_option* o;
 		while ((o = options.get_best_option(&sol)) != nullptr)
 		{
 			options.print_improvements(&sol);

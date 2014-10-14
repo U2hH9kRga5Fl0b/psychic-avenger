@@ -1,8 +1,8 @@
 #include "viewer.h"
-#include "tabu.h"
+#include "item.h"
 #include "common.h"
 
-void test_option(const tabu_option* option, const solution* origin)
+void test_option(const neighbor_option* option, const solution* origin)
 {
 	solution another{origin->get_city()};
 	another = (*origin);
@@ -34,12 +34,12 @@ void test_option(const tabu_option* option, const solution* origin)
 
 void test_local_search(solution *sol, int tests_per_phase)
 {
-	tabu_options options{sol->get_city()};
+	itemizer options{sol->get_city()};
 //	viewer v{sol, name, 0};
 	
 	for(int j=0;j<3;j++)
 	{
-		const tabu_option* best = options.get_best_option(sol);
+		const neighbor_option* best = options.get_best_option(sol);
 		if (best == nullptr)
 		{
 			std::cout << "found local minima" << std::endl;
@@ -48,7 +48,7 @@ void test_local_search(solution *sol, int tests_per_phase)
 		
 		for(int i=0; i<tests_per_phase; i++)
 		{
-			const tabu_option* ran = options.get_random_option(sol);
+			const neighbor_option* ran = options.get_random_option(sol);
 			test_option(ran, sol);
 			if (ran->get_improvement(sol) < best->get_improvement(sol))
 			{

@@ -16,7 +16,9 @@ public:
 	void sample(solution* sol)
 	{
 		const permutation start{sol};
-		local_search(sol);
+		
+		itemizer itms{sol->get_city()};
+		itms.greedy_search(sol);
 		const permutation local_opt{sol};
 		
 		auto it = collection.find(local_opt);
