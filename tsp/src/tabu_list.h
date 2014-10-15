@@ -10,7 +10,8 @@ public:
 	tabu_list() { refresh_stats(); }
 	virtual ~tabu_list() {}
 	
-	virtual bool is_tabu(const solution* sol, bool save=true) = 0;
+	virtual bool is_tabu(const solution* sol) = 0;
+	virtual void mark_tabu(const solution* sol)  = 0;
 	
 	void refresh_stats()
 	{
@@ -37,6 +38,47 @@ private:
 	int total;
 };
 
+class bloom_filter : public tabu_list
+{
+public:
+	bloom_filter(int nbits);
+	~bloom_filter();
+	
+	bool is_tabu(const solution* sol);
+	void mark_tabu(const solution* sol);
+	
+	friend std::ostream& operator<<(std::ostream& out, const bloom_filter& filter);
+private:
+	double get_saturation() const;
+	bool get_bit_at_index(int n) const;
+	void set_bit_at_index(int n);
+	// wolverine style...
+	void erase_memory();
+	
+	int nbits;
+	int nbytes;
+	uint8_t *mem;
+};
+
+
+class circular_hash_set : public tabu_list
+{
+public:
+	circular_hash_set(int size);
+	~circular_hash_set();
+	
+	bool is_tabu(const solution* sol);
+	void mark_tabu(const solution* sol);
+private:
+	
+	hash* first;
+	hash* last;
+	
+	int size;
+	std::set<hash> hashes;
+};
+
+
 class bloom_list : public tabu_list
 {
 public:
@@ -48,7 +90,7 @@ public:
 	{
 		bool ret = list.already_visited(sol, save);
 		
-		if (!(rand() % 1000) && list.get_saturation() > .5)
+		if (!(rand() % list.get_size()) && list.get_saturation() > .5)
 		{
 			list.set_size(2 * list.get_size());
 		}

@@ -242,6 +242,13 @@ void resched_option::apply(solution* sol) const
 }
 
 
+int resched_option::map(const solution* sol, int ndx) const
+{
+	int ndx1 = sol->get_index_of_stop(stop1);
+	int ndx2 = sol->get_index_of_stop(stop2);
+	
+	
+}
 
 
 

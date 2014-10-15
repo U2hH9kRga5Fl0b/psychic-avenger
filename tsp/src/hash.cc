@@ -67,197 +67,97 @@ uint32_t get_mask(int n)
 	}
 };
 
-bloom_filter::bloom_filter(int nbits_) :
-	nbits{0},
-	nbytes{0},
-	mem{nullptr}
+namespace
 {
-	set_size(nbits_);
-}
-
-bloom_filter::~bloom_filter() { delete mem; }
-
-bool bloom_filter::might_have(const hash& h) const
-{
-	return get_bit_at_index(h.get_value(nbits));
-}
-void bloom_filter::add(const hash& h)
-{
-	return set_bit_at_index(h.get_value(nbits));
-}
-bool bloom_filter::already_visited(const solution* sol, bool save)
-{
-	hash h{sol};
-	if (might_have(h))
+	int** default_hash_key;
+	
+	void init_hash_key(int num_stops)
 	{
-		return true;
-	}
-	else
-	{
-		if (save)
+		default_hash_key = new int*[num_stops];
+		for (int i=0; i<num_stops; i++)
 		{
-			std::cout << " checking if visited. before: \n" << (*this) <<std::endl;
-			add(h);
-			std::cout << " after:\n" << (*this) << std::endl;
+			ret[i] = new int[num_stops];
+			for (int j=0; j<num_stops; j++)
+			{
+				ret[i][j] = rand();
+			}
 		}
-		return false;
+	}
+	
+	void destroy_hash_key(int nstops)
+	{
+		for (int i=0; i<nstops; i++)
+		{
+			delete[] default_hash_key[i];
+		}
+		delete[] default_hash_key;
 	}
 }
-double bloom_filter::get_saturation() const
+
+
+
+hash get_hash(const solution* sol, int **hash_key)
 {
+	int n = sol->get_city()->num_stops;
+	
 	int sum = 0;
-
-#if 1
-	constexpr int ntsts = 50;
-	for (int i=0; i<ntsts; i++)
+	for (int i=0; i<n; i++)
 	{
-		if (get_bit_at_index(rand() % nbits))
+		sum += hash_key[i][sol->get_stop(i)];
+	}
+	return abs(sum);
+}
+
+void set_component(int component, int value)
+{
+	for (int i=0; i<num_hashes; i++)
+	{
+		hashes[i] += get_hash_key()[component][value];
+	}
+}
+
+
+hash::hash() : next{nullptr}
+{
+	for (int i=0;i<num_hashes;i++)
+	{
+		hashes[i] = 0;
+	}
+}	
+
+bool operator<(const hash& other) const
+{
+	for (int i=0; i<num_hashes; i++)
+	{
+		if (hashes[i] != other.hashes[i])
 		{
-			sum++;
+			return hashes[i] < other.hashes[i];
 		}
 	}
-	return sum / (double) ntsts;
-#else
-	for (int i=0;i<nbits;i++)
+	return false;
+}
+
+bool operator==(const hash& other) const
+{
+	for (int i=0; i<num_hashes; i++)
 	{
-		if (get_bit_at_index(i))
+		if (hashes[i] != other.hashes[i])
 		{
-			sum++;
+			return false;
 		}
 	}
-	return sum / (double) nbits;
-#endif
+	return true;
 }
 
-
-
-std::ostream& operator<<(std::ostream& out, const bloom_filter& filter)
+hash& operator=(const hash& other)
 {
-	for (int i=0; i<filter.nbytes; i++)
+	for (int i=0; i<num_hashes; i++)
 	{
-		out << std::hex << (0xff & filter.mem[i]);
-	}
-	return out << std::endl;
-}
-
-void bloom_filter::erase_memory()
-{
-	for (int i=0; i<nbytes; i++)
-	{
-		mem[i] = 0;
+		hashes[i] = other.hashes[i];
 	}
 }
 
-bool bloom_filter::get_bit_at_index(int n) const
+int get_value(int prime) const
 {
-	if (n < 0 || n > nbits)
-	{
-		std::cout << " Bad index into bloom filter: " << n << std::endl;
-		trap();
-	}
-	return mem[n / 8] & get_mask(n % 8);
-}
-
-void bloom_filter::set_bit_at_index(int n)
-{
-	if (n < 0 || n > nbits)
-	{
-		std::cout << " Bad index into bloom filter: " << n << std::endl;
-		trap();
-	}
-	mem[n / 8] |= get_mask(n % 8);
-}
-
-void bloom_filter::set_size(int nbits_)
-{
-	nbits = get_prime_less_than(nbits_);
-	nbytes = (nbits + 2 * 8) / 8;
-	delete[] mem;
-	mem = new uint8_t[nbytes];
-	erase_memory();
-}
-
-circular_hash_set::circular_hash_set(int size_) :
-		size{size_} {}
-circular_hash_set::circular_hash_set() :
-		circular_hash_set {100}
-		{}
-circular_hash_set::~circular_hash_set() {}
-	
-int circular_hash_set::get_size() const
-{
-	return size;
-}
-
-void circular_hash_set::set_size(int size_)
-{
-	if (size_ < hashes.size())
-	{
-		// overkill
-		hashes.clear();
-		first = nullptr;
-		last = nullptr;
-	}
-	size = size_;
-}
-bool circular_hash_set::already_visited(const solution* sol, bool save)
-{
-	hash h{sol};
-	if (contains(h))
-	{
-		return true;
-	}
-	else
-	{
-		if (save)
-		{
-			add(h);
-		}
-		return false;
-	}
-}
-bool circular_hash_set::contains(const hash& h) const
-{
-	return hashes.find(h) != hashes.end();
-}
-
-void circular_hash_set::add(hash& h)
-{
-	auto pair = hashes.insert(h);
-	hash* ptr = (hash*) &(*pair.first);
-	
-	if (first == nullptr)
-	{
-		first = ptr;
-		last = ptr;
-	}
-	else if (last != nullptr)
-	{
-		last->next = ptr;
-		last = ptr;
-	}
-	
-	if (hashes.size() > size)
-	{
-		auto it = hashes.find(*first);
-		first = it->next;
-		hashes.erase(it);
-	}
-}
-
-
-size_t bloom_filter::get_approx_memory_usage() const
-{
-	return nbytes;
-}
-
-size_t circular_hash_set::get_approx_memory_usage() const
-{
-	return sizeof(hash) * hashes.size();
-}
-
-void circular_hash_set::erase_memory()
-{
-	hashes.clear();
-	first = last = nullptr;
+	return std::abs(hashes[0]) % prime;
 }

@@ -18,6 +18,8 @@ public:
 	virtual double get_improvement(const solution* sol) const = 0;
 	virtual bool in_bounds(const solution* sol) const = 0;
 	virtual void apply(solution* sol) const = 0;
+
+	virtual hash get_hash_from(const solution* sol) const = 0;
 	
 	friend std::ostream& operator<<(std::ostream& out, const neighbor_option& op);
 protected:
@@ -40,7 +42,8 @@ public:
 	
 	double get_cost_along_path(const solution* sol) const;
 	bool intersects(const solution* sol) const;
-	
+
+	virtual hash get_hash_from(const solution* sol) const = 0;
 protected:
 	std::string get_name() const;
 };
@@ -55,6 +58,8 @@ public:
 	double get_improvement(const solution* sol) const;
 	bool in_bounds(const solution* sol) const;
 	void apply(solution* sol) const;
+	
+	virtual hash get_hash_from(const solution* sol) const = 0;
 protected:
 	std::string get_name() const;
 	
