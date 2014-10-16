@@ -19,7 +19,7 @@ public:
 	virtual bool in_bounds(const solution* sol) const = 0;
 	virtual void apply(solution* sol) const = 0;
 
-	virtual hash get_hash_from(const solution* sol) const = 0;
+	virtual hash get_hash(const solution* sol) const = 0;
 	
 	friend std::ostream& operator<<(std::ostream& out, const neighbor_option& op);
 protected:
@@ -43,7 +43,7 @@ public:
 	double get_cost_along_path(const solution* sol) const;
 	bool intersects(const solution* sol) const;
 
-	virtual hash get_hash_from(const solution* sol) const = 0;
+	hash get_hash(const solution* sol) const;
 protected:
 	std::string get_name() const;
 };
@@ -59,7 +59,7 @@ public:
 	bool in_bounds(const solution* sol) const;
 	void apply(solution* sol) const;
 	
-	virtual hash get_hash_from(const solution* sol) const = 0;
+	hash get_hash(const solution* sol) const;
 protected:
 	std::string get_name() const;
 	
@@ -86,7 +86,7 @@ public:
 	void sample_anneal(solution* sol, int num_steps, int nsamples, std::function<void(void)> callback=[](){});
 	
 	// tabu
-	void hybrid_tabu_search(solution* sol, tabu_list& tabs, int nsamples, std::function<void(void)> callbac=[](){});
+	void hybrid_search(solution* sol, int nsamples, std::function<void(void)> callbac=[](){});
 
 	// tabu
 	void ordered_search(solution* sol, std::function<void(void)> callback=[](){});
@@ -94,7 +94,7 @@ public:
 	
 	
 	void hybrid_search(solution* sol, double percent, std::function<void(void)> callback=[](){});
-	void ordered_tabu_search(solution* sol, tabu_list& tabs, int threshold, std::function<void(void)> callback=[](){});
+	void ordered_tabu_search(solution* sol, bloom_filter& tabs, int threshold, std::function<void(void)> callback=[](){});
 private:
 	void bubble_sort(const neighbor_option* first, const solution* sol);
 	int num_options;

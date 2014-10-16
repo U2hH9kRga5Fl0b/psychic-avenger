@@ -74,6 +74,8 @@ public:
 			perm[i] = other.perm[i];
 			stps[i] = other.stps[i];
 		}
+		
+		return (*this);
 	}
 	
 	bool operator<(const permutation& other) const

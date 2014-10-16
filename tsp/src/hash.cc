@@ -1,5 +1,8 @@
 
 #include "hash.h"
+#include <iomanip>
+
+int** default_hash_key;
 
 int get_prime_less_than(int n)
 {
@@ -48,84 +51,63 @@ int get_prime_less_than(int n)
 	return ret;
 }
 
-uint32_t get_mask(int n)
+void init_hash_key(int num_stops)
 {
-	// (1 << (n % 8))
-	switch(n)
+	default_hash_key = new int*[num_stops];
+	for (int i=0; i<num_stops; i++)
 	{
-		case 0: return 0x01;
-		case 1: return 0x02;
-		case 2: return 0x04;
-		case 3: return 0x08;
-		case 4: return 0x10;
-		case 5: return 0x20;
-		case 6: return 0x40;
-		case 7: return 0x80;
-		default:
-			std::cout << "Bad index in to byte." << std::endl;
-			trap();
-	}
-};
-
-namespace
-{
-	int** default_hash_key;
-	
-	void init_hash_key(int num_stops)
-	{
-		default_hash_key = new int*[num_stops];
-		for (int i=0; i<num_stops; i++)
+		default_hash_key[i] = new int[num_stops];
+		for (int j=0; j<num_stops; j++)
 		{
-			ret[i] = new int[num_stops];
-			for (int j=0; j<num_stops; j++)
-			{
-				ret[i][j] = rand();
-			}
+			default_hash_key[i][j] = rand();
 		}
-	}
-	
-	void destroy_hash_key(int nstops)
-	{
-		for (int i=0; i<nstops; i++)
-		{
-			delete[] default_hash_key[i];
-		}
-		delete[] default_hash_key;
 	}
 }
 
+void destroy_hash_key(int nstops)
+{
+	for (int i=0; i<nstops; i++)
+	{
+		delete[] default_hash_key[i];
+	}
+	delete[] default_hash_key;
+}
 
-
-hash get_hash(const solution* sol, int **hash_key)
+hash get_hash(const solution* sol)
 {
 	int n = sol->get_city()->num_stops;
 	
-	int sum = 0;
+	hash h;
+	
 	for (int i=0; i<n; i++)
 	{
-		sum += hash_key[i][sol->get_stop(i)];
+		h.set_component(i, sol->get_stop(i));
 	}
-	return abs(sum);
+	
+	return h;
 }
 
-void set_component(int component, int value)
+hash get_hash_unambig(const solution* sol) { return get_hash(sol); }
+
+int hash::get_value(int prime) const
 {
-	for (int i=0; i<num_hashes; i++)
-	{
-		hashes[i] += get_hash_key()[component][value];
-	}
+	return std::abs(hashes[0]) % prime;
 }
-
 
 hash::hash() : next{nullptr}
 {
-	for (int i=0;i<num_hashes;i++)
+	for (int i=0; i<num_hashes; i++)
 	{
 		hashes[i] = 0;
 	}
-}	
+}
 
-bool operator<(const hash& other) const
+hash::~hash()
+{
+	
+}
+
+bool hash::operator<(const hash& other) const
 {
 	for (int i=0; i<num_hashes; i++)
 	{
@@ -137,7 +119,7 @@ bool operator<(const hash& other) const
 	return false;
 }
 
-bool operator==(const hash& other) const
+bool hash::operator==(const hash& other) const
 {
 	for (int i=0; i<num_hashes; i++)
 	{
@@ -149,15 +131,24 @@ bool operator==(const hash& other) const
 	return true;
 }
 
-hash& operator=(const hash& other)
+hash& hash::operator=(const hash& other)
 {
 	for (int i=0; i<num_hashes; i++)
 	{
 		hashes[i] = other.hashes[i];
 	}
+	return (*this);
 }
 
-int get_value(int prime) const
+
+
+std::ostream& operator<<(std::ostream& out, const hash& other)
 {
-	return std::abs(hashes[0]) % prime;
+	out << std::dec;
+	
+	for (int i=0; i<num_hashes; i++)
+	{
+		out << 'h' << i << '=' << std::setw(5) << other.hashes[i] << ' ';
+	}
+	return out << std::endl;
 }

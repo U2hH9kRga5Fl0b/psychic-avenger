@@ -126,7 +126,7 @@ void anneal(solution *sol, int convergence_threshold, double tol, int start_anne
 	double bcost = best->get_cost();
 	
 	
-	bloom_list blm{500};
+	bloom_filter blm{500};
 	
 	for (int anneal = start_anneal; anneal>0; anneal-= dec)
 	{

@@ -8,7 +8,7 @@ static void print_exe_name(std::string&& name)
 	{
 		name = name.substr(ndx + 1, std::string::npos);
 	}
-	int index = 0;
+	
 	if (name.at(0) == '.')
 	{
 		name = name.substr(1, std::string::npos);

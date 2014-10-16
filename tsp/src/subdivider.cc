@@ -157,7 +157,6 @@ void draw_square(
 	double xmini, double xmaxi, double ymini, double ymaxi)
 {
 #if GRAPHICS
-	int n = bigcity->num_stops;
 	double xmin, xmax, ymin, ymax;
 	get_bounds(bigcity->locsx, bigcity->locsy, bigcity->num_stops, xmin, xmax, ymin, ymax);
 	

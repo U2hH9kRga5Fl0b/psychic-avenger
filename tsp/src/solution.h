@@ -10,6 +10,7 @@ class solution
 {
 public:
 	solution(city* c);
+	solution(const solution& other);
 	~solution();
 	
 	void random(std::function<void(void)> callback=[](){});
@@ -17,7 +18,7 @@ public:
 	void nearest_additional(std::function<void(void)> callback=[](){});
 	void empty();
 	
-	// could cache these...
+	// could cache this...
 	distance get_cost() const;
 	bool is_valid();
 	
@@ -58,7 +59,7 @@ public:
 	int length() const
 	{
 		int n = c->num_stops;
-		for (int i=0;i<n;i++)
+		for (int i=0; i<n; i++)
 		{
 			if (path[i] < 0)
 			{
@@ -74,9 +75,8 @@ public:
 	
 	void assign_serviced_indices();
 private:
-	
-	int *serviced_index;
 	int *path;
+	int *serviced_index;
 	city *c;
 };
 

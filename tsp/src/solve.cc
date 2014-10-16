@@ -407,6 +407,8 @@ int main(int argc, char **argv)
 		}
 	}
 	
+	init_hash_key(c->num_stops);
+	
 	start_time = std::chrono::system_clock::now();
 	
 	std::string algo{argv[1]};
@@ -514,6 +516,8 @@ int main(int argc, char **argv)
 	{
 		print_usage(argc, argv);
 	}
+	
+	destroy_hash_key(c->num_stops);
 	
 	delete c;
 	

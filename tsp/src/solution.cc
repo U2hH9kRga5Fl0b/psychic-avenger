@@ -14,6 +14,12 @@ solution::solution(city *c_) :
 	empty();
 }
 
+solution::solution(const solution& sol) :
+	solution {sol.get_city()}
+{
+	(*this) = sol;
+}
+
 solution::~solution()
 {
 	delete[] path;
@@ -63,6 +69,8 @@ solution& solution::operator=(const solution& other)
 		path[i] = other.path[i];
 		serviced_index[i] = other.serviced_index[i];
 	}
+	
+	return (*this);
 }
 
 
@@ -87,7 +95,6 @@ void solution::assign_serviced_indices()
 	}
 	for (int i=0;i<n;i++)
 	{
-		int stop = path[i];
 		if (path[i] >= 0)
 		{
 			serviced_index[path[i]] = i;
@@ -262,6 +269,8 @@ bool solution::is_valid()
 		std::cout << "mismatch" << std::endl;
 		trap();
 	}
+	
+	return true;
 }
 
 

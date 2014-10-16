@@ -59,7 +59,8 @@ namespace
 			}
 		}
 		
-		for (int i=0; i<locs.size(); i++)
+		int eeesize = locs.size();
+		for (int i=0; i<eeesize; i++)
 		{
 			if (!locs.at(i).used)
 			{
@@ -234,7 +235,6 @@ void view_city(city* ci, const std::string& name)
 
 void view_city(city* bigcity, cv::Mat& mat, int width, int height)
 {
-	int n = bigcity->num_stops;
 	double xmin, xmax, ymin, ymax;
 	get_bounds(bigcity->locsx, bigcity->locsy, bigcity->num_stops, xmin, xmax, ymin, ymax);
 	

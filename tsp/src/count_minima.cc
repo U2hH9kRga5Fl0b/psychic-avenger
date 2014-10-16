@@ -25,6 +25,6 @@ void complete_decision_space(city* c)
 
 anneal_statistics* find_neighbors(solution* sol, int distance_to_anneal)
 {
-	
+	return nullptr;
 }
 

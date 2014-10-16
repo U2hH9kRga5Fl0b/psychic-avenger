@@ -10,8 +10,8 @@ public:
 	tabu_list() { refresh_stats(); }
 	virtual ~tabu_list() {}
 	
-	virtual bool is_tabu(const solution* sol) = 0;
-	virtual void mark_tabu(const solution* sol)  = 0;
+	virtual bool is_tabu(const hash& h) = 0;
+	virtual void mark_tabu(const hash& h)  = 0;
 	
 	void refresh_stats()
 	{
@@ -44,8 +44,8 @@ public:
 	bloom_filter(int nbits);
 	~bloom_filter();
 	
-	bool is_tabu(const solution* sol);
-	void mark_tabu(const solution* sol);
+	bool is_tabu(const hash& h);
+	void mark_tabu(const hash& h);
 	
 	friend std::ostream& operator<<(std::ostream& out, const bloom_filter& filter);
 private:
@@ -67,8 +67,8 @@ public:
 	circular_hash_set(int size);
 	~circular_hash_set();
 	
-	bool is_tabu(const solution* sol);
-	void mark_tabu(const solution* sol);
+	bool is_tabu(const hash& h);
+	void mark_tabu(const hash& h);
 private:
 	
 	hash* first;
@@ -79,6 +79,8 @@ private:
 };
 
 
+
+#if 0
 class bloom_list : public tabu_list
 {
 public:
@@ -90,10 +92,10 @@ public:
 	{
 		bool ret = list.already_visited(sol, save);
 		
-		if (!(rand() % list.get_size()) && list.get_saturation() > .5)
-		{
-			list.set_size(2 * list.get_size());
-		}
+//		if (!(rand() % list.get_size()) && list.get_saturation() > .5)
+//		{
+//			list.set_size(2 * list.get_size());
+//		}
 		
 		return stopped(ret);
 	}
@@ -129,7 +131,7 @@ public:
 };
 
 
-
+#endif
 
 #if 0
 		

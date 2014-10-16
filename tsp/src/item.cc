@@ -4,6 +4,8 @@
 #include "common.h"
 
 #include <algorithm>
+#include <list>
+#include <sstream>
 
 
 #include <float.h>
@@ -242,24 +244,104 @@ void resched_option::apply(solution* sol) const
 }
 
 
-int resched_option::map(const solution* sol, int ndx) const
+
+
+hash resched_option::get_hash(const solution* sol) const
 {
+	int n = sol->get_city()->num_stops;
+	
+	int ndx1 = sol->get_index_of_stop(stop1);
+	int ndx2 = sol->get_index_of_stop(stop2);
+	if (ndx2 < ndx1)
+	{
+		int tmp = ndx1;
+		ndx1 = ndx2;
+		ndx2 = tmp;
+	}
+	
+	hash h;
+	
+	for (int i=0; i<ndx1; i++)
+	{
+		h.set_component(i, sol->get_stop(i));
+	}
+	for (int i=ndx1;i<=ndx2;i++)
+	{
+		h.set_component(i, sol->get_stop(ndx2 + ndx1 - i));
+	}
+	for (int i=ndx2+1; i<n; i++)
+	{
+		h.set_component(i, sol->get_stop(i));
+	}
+	
+	return h;
+}
+
+hash swap_option::get_hash(const solution* sol) const
+{
+	int n = sol->get_city()->num_stops;
+	
 	int ndx1 = sol->get_index_of_stop(stop1);
 	int ndx2 = sol->get_index_of_stop(stop2);
 	
+	hash h;
 	
+	if (ndx1 < ndx2)
+	{
+		// 0 1 2 3 ...         ndx1-1 ndx1   ndx1+1 ... ndx2-1   ndx2      ndx2+1 .... n
+		// 0 1 2 3 ...         ndx1-1 ndx1+1 ndx1+2 ... ndx2     ndx1      ndx2+1 .... n
+		
+		for (int i=0; i<ndx1; i++)
+		{
+			h.set_component(i, sol->get_stop(i));
+		}
+	
+		for (int i=ndx1; i<ndx2; i++)
+		{
+			h.set_component(i, sol->get_stop(i+1));
+		}
+		int i = ndx2;
+		h.set_component(i, sol->get_stop(ndx1));
+		
+		for (int i=ndx2+1; i<n; i++)
+		{
+			h.set_component(i, sol->get_stop(i));
+		}
+	}
+	else // ndx2 == minidx
+	{
+		// 0 1 2 3 ...         ndx2-1 ndx2   ndx2+1   ndx2+2 ... ndx1-1   ndx1      ndx1+1 .... n
+		// 0 1 2 3 ...         ndx2-1 ndx2   ndx1     ndx2+1 ... ndx1-2   ndx1-1    ndx1+1 .... n
+		
+		for (int i=0; i<=ndx2; i++)
+		{
+			h.set_component(i, sol->get_stop(i));
+		}
+		
+		h.set_component(ndx2+1, sol->get_stop(ndx1));
+		
+		for (int i=ndx2+2;i<=ndx1;i++)
+		{
+			h.set_component(i, sol->get_stop(i-1));
+		}
+		
+		for (int i=ndx1+1; i<n; i++)
+		{
+			h.set_component(i, sol->get_stop(i));
+		}
+	}
+	
+	return h;
 }
-
-
-
 
 
 
 
 itemizer::itemizer(city* c)
 {
+	std::list<neighbor_option*> local_options;
 	int n = c->num_stops;
-	num_options = 0;
+	
 	for (int i=0; i<n; i++)
 	{
 		for(int j=0; j<n; j++)
@@ -268,41 +350,26 @@ itemizer::itemizer(city* c)
 			{
 				continue;
 			}
-			
-			num_options++;
+			local_options.push_back(new resched_option{i, j, c});
 			
 			if (j < i)
 			{
 				continue;
 			}
-			
-			num_options++;
+			local_options.push_back(new swap_option{i, j, c});
 		}
 	}
 	
-	options = new neighbor_option*[num_options];
+	options = new neighbor_option*[num_options = local_options.size()];
 	
 	int ndx = 0;
-	for (int i=0; i<n; i++)
+	auto end = local_options.end();
+	for (auto it = local_options.begin(); it != end; ++it)
 	{
-		for(int j=0; j<n; j++)
-		{
-			if (i==j)
-			{
-				continue;
-			}
-			
-			options[ndx++] = new resched_option{i, j, c};
-			
-			if (j < i)
-			{
-				continue;
-			}
-			
-			options[ndx++] = new swap_option{i, j, c};
-		}
+		options[ndx++] = (*it);
 	}
 }
+
 itemizer::~itemizer()
 {
 	for (int i=0; i<num_options; i++)
@@ -320,9 +387,6 @@ const neighbor_option* itemizer::get_best_option(const solution* sol)
 const neighbor_option* itemizer::get_nth_best_option(const solution* sol, int n, bool hurt)
 {
 	n = std::max(1, n);
-	
-	double best_improvement = DBL_MAX;
-	const neighbor_option* best = nullptr;
 	
 	std::vector<const neighbor_option*> better;
 	
@@ -488,221 +552,3 @@ void itemizer::sort(const solution* sol)
 		return op1->get_improvement(sol) < op2->get_improvement(sol);
 	});
 }
-
-void itemizer::ordered_search(solution* sol, std::function<void(void)> callback)
-{
-	bool improved;
-	do
-	{
-		improved = false;
-		for (int i=0;i<num_options;i++)
-		{
-			const neighbor_option* op = options[i];
-			
-			if (!op->in_bounds(sol))
-			{
-				continue;
-			}
-			if (op->get_improvement(sol) >= 0.0)
-			{
-				continue;
-			}
-			
-			improved = true;
-			op->apply(sol);
-			callback();
-		}
-	} while (improved);
-}
-
-
-void itemizer::nth_anneal(solution* sol, int num_steps, int range, std::function<void(void)> callback)
-{
-	range = std::max(range, 1);
-	for (int i=0; i<num_steps; i++)
-	{
-		const neighbor_option* op;
-		do
-		{
-			op = get_nth_best_option(sol, rand() % range, true);
-		} while (op == nullptr);
-		op->apply(sol);
-		callback();
-	}
-}
-
-void itemizer::sample_anneal(solution* sol, int num_steps, int nsamples, std::function<void(void)> callback)
-{
-	nsamples = std::max(nsamples, 1);
-	for (int i=0; i<num_steps; i++)
-	{
-		const neighbor_option* op;
-		do
-		{
-			op = get_best_of_sample(sol, nsamples);
-		} while (op == nullptr);
-		op->apply(sol);
-		callback();
-	}
-}
-
-void itemizer::greedy_search(solution *sol, std::function<void(void)> callback)
-{
-	const neighbor_option* o;
-	while ((o = get_best_option(sol)) != nullptr)
-	{
-		if (o->get_improvement(sol) >= 0.0)
-		{
-			break;
-		}
-		o->apply(sol);
-		std::cout << "new cost: " << sol->get_cost() << std::endl;
-		callback();
-	}
-}
-
-
-void itemizer::hybrid_search(solution* sol, double percent, std::function<void(void)> callback)
-{
-	// performed greedy
-	int count_improvements;
-	do
-	{
-		const neighbor_option* best = nullptr;
-		double best_improvement = DBL_MAX;
-		
-		count_improvements = 0;
-		
-		for (int i=0; i<num_options; i++)
-		{
-			const neighbor_option* op = options[i];
-			
-			if (!op->in_bounds(sol))
-			{
-				continue;
-			}
-			double imp = op->get_improvement(sol);
-			if (imp < 0.0)
-			{
-				count_improvements++;
-			}
-			if (imp > best_improvement)
-			{
-				continue;
-			}
-			
-			best_improvement = imp;
-			best = op;
-		}
-		
-		if (best == nullptr)
-		{
-			break;
-		}
-		
-		best->apply(sol);
-	} while ((count_improvements / (double) num_options) > percent);
-	
-	
-	// perform ordered
-	bool improved;
-	do
-	{
-		improved = false;
-		for (int i=0;i<num_options;i++)
-		{
-			const neighbor_option* op = options[i];
-			
-			if (!op->in_bounds(sol))
-			{
-				continue;
-			}
-			if (op->get_improvement(sol) >= 0.0)
-			{
-				continue;
-			}
-			
-			improved = true;
-			op->apply(sol);
-			callback();
-		}
-	} while (improved);
-}
-
-void itemizer::ordered_tabu_search(solution* sol, tabu_list& tabs, int threshold, std::function<void(void)> callback)
-{
-	// perform ordered
-	double global_best_cost = sol->get_cost();
-	
-	int count = 0;
-	do
-	{
-		const neighbor_option *best = nullptr;
-		double best_improvement = DBL_MAX;
-		
-		std::cout << "testing all options...";
-		std::cout.flush();
-		
-//		for (int i=0; i<num_options; i++)
-		for (int r=0;r<1000;r++)
-		{
-			int i = rand() % num_options;
-			//std::cout << std::dec << i << " of " << num_options << std::endl;
-			const neighbor_option* op = options[i];
-			
-			if (!op->in_bounds(sol))
-			{
-				continue;
-			}
-			
-			double imp = op->get_improvement(sol);
-			if (imp >= best_improvement)
-			{
-				continue;
-			}
-			
-			solution copy{sol->get_city()};
-			copy = (*sol);
-			op->apply(&copy);
-			if (tabs.is_tabu(&copy, false))
-			{
-				continue;
-			}
-			
-			best_improvement = imp;
-			best = op;
-		}
-		std::cout << " ...done" << std::endl;
-		std::cout.flush();
-		
-		if (best == nullptr)
-		{
-			break;
-		}
-		
-		best->apply(sol);
-		callback();
-		tabs.is_tabu(sol, true);
-		
-		if (sol->get_cost() < global_best_cost)
-		{
-			count = 0;
-		}
-		
-		sol->is_valid();
-	} while(count++ < threshold);
-	
-	const neighbor_option* o;
-	while ((o = get_best_option(sol)) != nullptr)
-	{
-		std::cout << "ncost = " << o->get_improvement(sol) << std::endl;
-		if (o->get_improvement(sol) >= 0.0)
-		{
-			break;
-		}
-		o->apply(sol);
-		callback();
-		tabs.is_tabu(sol, true);
-	}
-}
-
