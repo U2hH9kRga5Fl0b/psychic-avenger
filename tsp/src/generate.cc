@@ -5,11 +5,6 @@
 #include <iostream>
 #include <fstream>
 
-void breakpointhere(const std::string& msg)
-{
-	std::cout << "on the way out!" << std::endl;
-	exit(-1);
-}
 
 void print_usage(int argc, char **argv)
 {
@@ -17,6 +12,8 @@ void print_usage(int argc, char **argv)
 	trap();
 }
 
+
+#ifdef HAVE_MAIN
 int main(int argc, char **argv)
 {
 	srand(time(nullptr));
@@ -79,3 +76,5 @@ int main(int argc, char **argv)
 	
 	return 0;
 }
+
+#endif

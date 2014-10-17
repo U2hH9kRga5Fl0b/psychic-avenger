@@ -24,8 +24,8 @@ bool bloom_filter::is_tabu(const hash& h)
 
 void bloom_filter::mark_tabu(const hash& sol)
 {
-	std::cout << " checking if visited. before: \n" << (*this) <<std::endl;
-	std::cout << std::dec << " index = " << sol.get_value(nbits) << std::endl;
+//	std::cout << " checking if visited. before: \n" << (*this) <<std::endl;
+//	std::cout << std::dec << " index = " << sol.get_value(nbits) << std::endl;
 	
 	set_bit_at_index(sol.get_value(nbits));
 	
@@ -40,7 +40,7 @@ void bloom_filter::mark_tabu(const hash& sol)
 		}
 	}
 	
-	std::cout << " after:\n" << (*this) << std::endl;
+//	std::cout << " after:\n" << (*this) << std::endl;
 }
 double bloom_filter::get_saturation() const
 {

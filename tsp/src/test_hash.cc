@@ -3,7 +3,8 @@
 #include "hash.h"
 #include <iomanip>
 
-void breakpointhere(const std::string& ) {}
+
+#ifdef HAVE_MAIN
 
 int main()
 {
@@ -129,3 +130,4 @@ int main()
 	delete[] collisions1;
 	delete[] collisions2;
 }
+#endif

@@ -26,6 +26,8 @@ static void print_exe_name(std::string&& name)
 	std::cout << name << std::endl;
 }
 
+#ifdef HAVE_MAIN
+
 int main(int argc, char **argv)
 {
 	for (int i=1;i<argc;i++)
@@ -33,3 +35,5 @@ int main(int argc, char **argv)
 		print_exe_name(std::string{argv[i]});
 	}
 }
+
+#endif

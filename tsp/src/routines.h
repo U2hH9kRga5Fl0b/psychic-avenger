@@ -15,7 +15,10 @@ bool intersect(
 	double x1e, double y1e,
 	
 	double x2b, double y2b,
-	double x2e, double y2e);
+	double x2e, double y2e,
+
+
+	double& xout, double& yout);
 
 
 void anneal_s(solution *sol, int convergence_threshold, double accept_negative_prob);
