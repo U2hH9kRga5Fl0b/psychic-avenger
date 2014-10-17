@@ -1,10 +1,9 @@
-#include "solution.h"
-#include "item.h"
+#include "path_relinking.h"
 #include "limits.h"
 #include "viewer.h"
 
 
-int distance_between_positioned(solution* sol1, solution *sol2)
+int distance_between_positioned(const solution* sol1, const solution *sol2)
 {
 	 int sum = 0;
 
@@ -14,7 +13,7 @@ int distance_between_positioned(solution* sol1, solution *sol2)
 	 {
 		int stop1 = sol1->get_stop(i);
 		int stop2 = sol2->get_stop(i);
-		if (stop1 == stop2)
+		if (stop1 != stop2)
 		{
 			sum++;
 		}
@@ -55,157 +54,178 @@ int distance_between_sequence(solution* sol1, solution *sol2)
 	 return sum;
 }
 
+int distance_between_sequence_no_order(solution* sol1, solution *sol2)
+{
+	 int sum = 0;
+
+	 const int n = sol1->get_city()->num_stops;
+
+	 for (int i=0; i<n-1; i++)
+	 {
+		int stop1 = sol1->get_stop(i  );
+		int stop2 = sol1->get_stop(i+1);
+
+		if (stop2 < 0)
+		{
+			 break;
+		}
+
+		int ndx1 = sol2->get_index_of_stop(stop1);
+		int ndx2 = sol2->get_index_of_stop(stop2);
+
+		if (ndx1 != i)
+		{
+			sum++;
+		}
 
 
-class operation_path
+		if (ndx1 < 0 || ndx2 < 0)
+		{
+			sum++;
+			continue;
+		}
+
+		if (ndx2 == ndx1 + 1)
+		{
+			continue;
+		}
+		if (ndx2 == ndx1 - 1)
+		{
+			continue;
+		}
+
+		sum++;
+	 }
+
+	 if (sum == 0)
+	 {
+		 for (int i=0;i<n;i++)
+		 {
+			 if (sol1->get_stop(i) != sol2->get_stop(i))
+			 {
+				 return 1;
+			 }
+		 }
+		 return 0;
+	 }
+	 else
+	 {
+		 return 1 + sum;
+	 }
+}
+
+
+class opt
 {
 public:
-	operation_path(const neighbor_option *op_, operation_path *n_) :
-		op {op_},
-		next{n_} {}
+	opt(const neighbor_option *o, const solution& other, const solution* dest, int l) :
+		op{o},
+		sol{other},
+		cost{distance_between_positioned(&sol, dest)},
+		length{l} {}
+	~opt() {}
 
-	~operation_path()
-	{
-		delete next;
-	}
-
-	void print()
-	{
-
-
-
-
-	}
-
-	const neighbor_option* op;
-	operation_path* next;
+	const neighbor_option *op;
+	solution sol;
+	int cost;
+	int length;
 };
 
-
-
-
-operation_path* dfs_search(solution* current, solution* destination, itemizer& items,
-		const neighbor_option *op,
-		int remaining_dist, int clength, int& best_length,
-		tabu_list& l, solution* draw, viewer& v, double worst_cost)
+operation_path* dfs_search(opt* current, solution* destination, itemizer& items,
+		int& best_length, double worst_cost,
+		solution* draw, viewer& v)
 {
-	if (clength >= best_length)
+	if (current->cost == 0)
 	{
-		return nullptr;
-	}
-
-	if (!op->in_bounds(current))
-	{
-		return nullptr;
-	}
-
-	solution intermediate{*current};
-	op->apply(&intermediate);
-
-	{
-		hash h = get_hash(&intermediate);
-		if (l.is_tabu(h))
-		{
-			return nullptr;
-		}
-		l.mark_tabu(h);
-	}
-
-	int ncost = distance_between_sequence(&intermediate, destination);
-	if (ncost == 0)
-	{
-		std::cout << "Found one path with length " << clength << std::endl;
+		std::cout << "Found one path with length " << current->length << std::endl;
+		std::cin.ignore();
 
 		// We found it!
-		best_length = clength;
-		return new operation_path{op, nullptr};
+		best_length = current->length;
+		return new operation_path{current->op, nullptr};
 	}
-
-	if (ncost >= remaining_dist)
-	{
-		// Moving away :(
-		if (intermediate.get_cost() > 3 * worst_cost)
-		{
-			return nullptr;
-		}
-	}
-
-
-	{
-		for (int i=0; i<clength; i++)
-		{
-			std::cout << ' ';
-		}
-
-		std::cout << ncost << std::endl;
-		(*draw) = intermediate;
+//	{
+//		for (int i=0; i<clength; i++)
+//		{
+//			std::cout << ' ';
+//		}
+//
+//		std::cout << ncost << std::endl;
+		(*draw) = (current->sol);
 		v.update();
-	}
+//	}
 
-	// We are getting closer, take the best option from here...
-	operation_path* best_path = nullptr;
+	std::set<opt *, std::function<bool(const opt*o1, const opt* o2)>> good_options {[](const opt *o1, const opt* o2)
+	{
+			return o1->cost < o2->cost;
+	}};
+
+	if (current->length + 1 >= best_length)
+	{
+		return nullptr;
+	}
 
 	int num = items.get_num_options();
 	for (int i=0; i<num; i++)
 	{
-		operation_path* p = dfs_search(&intermediate, destination, items,
-				items.get_option(i),
-				ncost, clength+1,
-				best_length, l, draw, v, worst_cost);
+		const neighbor_option* o = items.get_option(i);
+		if (!o->in_bounds(&current->sol))
+		{
+			continue;
+		}
+
+		opt* anopt = new opt{o, current->sol, destination, current->length + 1};
+//		if (anopt->cost >= remaining_dist)
+//		{
+//			// Moving too far away :(
+//			if (current->sol.get_cost() > 3 * worst_cost)
+//			{
+//				return nullptr;
+//			}
+//		}
+		good_options.insert(anopt);
+	}
+
+	operation_path* best_path = nullptr;
+	auto end = good_options.end();
+	for (auto it = good_options.begin(); it != end; ++it)
+	{
+		operation_path* p = dfs_search(*it, destination, items,
+				best_length, worst_cost,
+				draw, v);
 
 		if (p != nullptr)
 		{
 			delete best_path;
 			best_path = p;
 		}
+
+		delete *it;
 	}
 
 	if (best_path != nullptr)
 	{
-		return new operation_path{op, best_path};
+		return new operation_path{current->op, best_path};
 	}
 	return nullptr;
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void link_paths(solution* source, solution* dest, itemizer& items, std::function<void(void)> callback)
 {
-	double worst_cost = std::max(source->get_cost(), dest->get_cost());
-
-	int blength = INT_MAX;
-	operation_path* shortest_path = nullptr;
-
 	solution draw {source->get_city()};
 	viewer v{&draw, "current_link"};
 
-	bloom_filter blf{1000000};
+	double worst_cost = std::max(source->get_cost(), dest->get_cost());
+	int blength = source->get_city()->num_stops;
 
-	int d = distance_between_sequence(source, dest);
+	neighbor_option* sent_opt = new nothing_option;
+	opt* sent = new opt{sent_opt, *source, dest, 0};
 
-	int num_options = items.get_num_options();
-	for (int i=0; i<num_options; i++)
-	{
-		operation_path* p = dfs_search(source, dest, items, items.get_option(i), d, 1, blength, blf, &draw, v, worst_cost);
-		if (p != nullptr)
-		{
-			delete shortest_path;
-			shortest_path = p;
-		}
-	}
+	operation_path* shortest_path = dfs_search(sent, dest, items, blength, worst_cost, &draw, v);
+
+	delete sent;
+	delete sent_opt;
 
 	delete shortest_path;
 }
@@ -213,71 +233,69 @@ void link_paths(solution* source, solution* dest, itemizer& items, std::function
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#if 0
-
-solution intermediate{source->get_city()};
-
-int rem = distance_between(source, dest);
-do
+void fastest_descent(solution* source, solution* dest, itemizer& items, std::function<void(void)> callback)
 {
-	const neighbor_option* best_option = nullptr;
-	int best_cost = INT_MAX;
+	solution intermediate{source->get_city()};
 
-	int num = items.get_num_options();
-	for (int i=0; i<num; i++)
-//		for (int t=0; t<100; t++)
+	std::cout << "going from\n" << (*source) << "\nto\n" << (*dest) << std::endl;
+
+
+	viewer myviewer{source, "approaching"};
+	viewer myinnerviewer{&intermediate, "temp"};
+
+	int (*const dist_func)(const solution*s1, const solution*s2) =
+//			&distance_between_sequence_no_order;
+			&distance_between_positioned;
+
+	int rem = dist_func(source, dest);
+	do
 	{
-//			int i = rand() % num;
-		const neighbor_option* alternative = items.get_option(i);
-		if (!alternative->in_bounds(source))
-		{
-			continue;
-		}
+		const neighbor_option* best_option = nullptr;
+		int best_cost = rem;
 
-		intermediate = (*source);
-		alternative->apply(&intermediate);
-
-		int delta = distance_between(&intermediate, dest);
-		if (delta <= rem)
+		int num = items.get_num_options();
+		for (int i=0; i<num; i++)
 		{
-			// Only get closer
-			continue;
-		}
+			const neighbor_option* alternative = items.get_option(i);
+			if (!alternative->in_bounds(source))
+			{
+				std::cout << "This shouldn't happen." << std::endl;
+				continue;
+			}
 
-		if (delta < best_cost)
-		{
+			intermediate = (*source);
+
+//			bool goodone = alternative->get_name() == "swap" &&
+//					intermediate.get_index_of_stop(alternative->stop1) == 0 &&
+//					intermediate.get_index_of_stop(alternative->stop2) == 9;
+
+			alternative->apply(&intermediate);
+			myinnerviewer.update();
+			int newdist = dist_func(&intermediate, dest);
+			if (newdist >= best_cost)
+			{
+				continue;
+			}
+
 			best_option = alternative;
-			best_cost = delta;
+			best_cost = newdist;
 		}
-	}
 
-	if (best_option == nullptr)
-	{
-		std::cout << "Could not get closer to the destination.";
-		return;
-	}
+		if (best_option == nullptr)
+		{
+			std::cout << "Could not get closer to the destination.";
+			return;
+		}
 
-	std::cout << "Best operation " << *best_option << std::endl;
-	std::cout << " has distance " << distance_between(&intermediate, dest) << " from the destination.";
-	std::cin.ignore();
+		best_option->apply(source);
 
-	best_option->apply(source);
-	rem = best_cost;
-	callback();
-} while (rem > 0);
-#endif
+//		std::cout << "Best operation " << *best_option << std::endl;
+//		std::cout << "it leaves solution " << (*source) << std::endl;
+//		std::cout << "it is distance " << dist_func(source, dest) << "\nfrom:\n" << (*dest) << std::endl;
+
+		rem = best_cost;
+		myviewer.update();
+		myviewer.pause();
+//		callback();
+	} while (rem > 0);
+}

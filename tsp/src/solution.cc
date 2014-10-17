@@ -129,9 +129,6 @@ std::ostream& operator<<(std::ostream& out, const solution& sol)
 
 
 #if 0
-
-	
-	
 	solution s{&c};
 	std::cout << s << std::endl;
 	s.insert_at(0,0);

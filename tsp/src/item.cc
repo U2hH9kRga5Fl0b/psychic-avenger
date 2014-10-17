@@ -18,6 +18,8 @@ itemizer::itemizer(city* c)
 	
 	for (int i=0; i<n; i++)
 	{
+		local_options.push_back(new resched_option{i, -1, c});
+
 		for(int j=0; j<n; j++)
 		{
 			if (i==j)

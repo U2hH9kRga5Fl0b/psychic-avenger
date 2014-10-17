@@ -7,6 +7,7 @@
 #include "item.h"
 #include "count_minima.h"
 #include "common.h"
+#include "path_relinking.h"
 
 #include <iostream>
 #include <thread>
@@ -458,7 +459,9 @@ int main(int argc, char **argv)
 			return -1;
 		}
 	}
+
 	init_hash_key(c->num_stops);
+
 	itemizer items{c};
 
 	solution* sol1 = new solution{c};
@@ -476,8 +479,10 @@ int main(int argc, char **argv)
 
 	viewer tv{traveler, "path_between"};
 
-	void link_paths(solution* source, solution* dest, itemizer& items, std::function<void(void)> callback);
-	link_paths(traveler, sol2, items, [&tv](){tv.update();});
+//	levenshtein(sol1, sol2);
+//	v2.pause();
+
+	fastest_descent(sol1, sol2, items, [&tv](){tv.update();});
 
 	destroy_hash_key(c->num_stops);
 

@@ -27,7 +27,7 @@ public:
 	virtual hash get_hash(const solution* sol) const = 0;
 
 	friend std::ostream& operator<<(std::ostream& out, const neighbor_option& op);
-protected:
+public:
 	virtual std::string get_name() const = 0;
 
 	int stop1, stop2;
@@ -68,6 +68,21 @@ public:
 protected:
 	std::string get_name() const;
 
+};
+
+class nothing_option : public neighbor_option
+{
+public:
+	nothing_option() : neighbor_option{0, 0, nullptr} {}
+	~nothing_option() {}
+
+	double get_improvement(const solution* sol) const { return 0.0; };
+	bool in_bounds(const solution* sol) const { return true; };
+	void apply(solution* sol) const {};
+
+	hash get_hash(const solution* sol) const { return get_hash(sol); }
+protected:
+	std::string get_name() const { return "nothing"; };
 };
 
 
