@@ -53,7 +53,7 @@ public:
 	{
 		for (int i=0; i<len; i++)
 		{
-			sol->service(start + i, stps[perm[i]]);
+			sol->set_path_at(start + i, stps[perm[i]]);
 		}
 		sol->assign_serviced_indices();
 	}

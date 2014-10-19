@@ -152,11 +152,7 @@ void two_opt::apply(solution* sol) const
 
 	for(;ndx1<ndx2;ndx1++,ndx2--)
 	{
-		int f = sol->get_stop(ndx1);
-		int s = sol->get_stop(ndx2);
-
-		sol->service(ndx1, s);
-		sol->service(ndx2, f);
+		sol->swap(ndx1, ndx2);
 	}
 
 	sol->is_valid();
@@ -397,3 +393,181 @@ hash two_opt::get_hash(const solution* sol) const
 }
 
 
+
+
+
+
+// This is the same thing as the resched option...
+swap_option::swap_option(int stop1, int stop2, city* c) :
+		neighbor_option{stop1, stop2, c}
+{
+}
+
+swap_option::~swap_option()
+{
+}
+
+double swap_option::get_improvement(const solution* sol) const
+{
+	int idx1 = sol->get_index_of_stop(stop1);
+	int idx2 = sol->get_index_of_stop(stop2);
+
+	if (idx1 > idx2)
+	{
+		int tmp = idx1;
+		idx1 = idx2;
+		idx2 = tmp;
+	}
+
+	const city* ci = sol->get_city();
+	const int n = ci->num_stops;
+	// there is always a c and d.
+	const bool hasa = idx1 > 0                                                ; //
+	const bool hasc = (idx1 < n-1 && sol->get_stop(idx1+1) >= 0)   || false   ; // there is always a c and d.
+	const bool hasd = idx2 > 0                                     || false   ; //
+	const bool hasf = (idx2 < n-1 && sol->get_stop(idx2+1) >= 0)              ; //
+
+	const int a = hasa ? sol->get_stop(idx1-1) : -1;
+	const int b = sol->get_stop(idx1); // These might have been swapped in order to make idx1 < idx2
+	const int c = hasc ? sol->get_stop(idx1+1) : -1;
+	const int d = hasd ? sol->get_stop(idx2-1) : -1;
+	const int e = sol->get_stop(idx2); // These might have been swapped in order to make idx1 < idx2
+	const int f = hasf ? sol->get_stop(idx2+1) : -1;
+
+	double oc = 0.0;
+	double nc = 0.0;
+
+	if (hasa)
+	{
+		oc += ci->get_cost(a, b);
+		nc += ci->get_cost(a, e);
+	}
+	if (hasf)
+	{
+		oc += ci->get_cost(e, f);
+		nc += ci->get_cost(b, f);
+	}
+
+	if (idx1 + 1 == idx2)
+	{
+		// a b e f
+		// a e b f
+
+		oc += ci->get_cost(b, e);
+		nc += ci->get_cost(e, b);
+	}
+	else
+	{
+		//  a b c .... d e f ...
+		//  a e c .... d b f ...
+
+		if (hasc)
+		{
+			oc += ci->get_cost(b, c);
+			nc += ci->get_cost(e, c);
+		}
+		if (hasd)
+		{
+			oc += ci->get_cost(d, e);
+			nc += ci->get_cost(d, b);
+		}
+	}
+
+	return nc - oc;
+}
+
+bool swap_option::in_bounds(const solution* sol) const
+{
+	return priv_in_bounds(stop1, sol) && priv_in_bounds(stop2, sol);
+}
+
+void swap_option::apply(solution* sol) const
+{
+	sol->swap(sol->get_index_of_stop(stop1),
+			sol->get_index_of_stop(stop2));
+}
+
+hash swap_option::get_hash(const solution* sol) const
+{
+	int n = sol->get_city()->num_stops;
+
+	int ndx1 = sol->get_index_of_stop(stop1);
+	int ndx2 = sol->get_index_of_stop(stop2);
+	if (ndx2 < ndx1)
+	{
+		int tmp = ndx1;
+		ndx1 = ndx2;
+		ndx2 = tmp;
+	}
+
+	hash h;
+
+	for (int i=0; i<ndx1; i++)
+	{
+		h.set_component(i, sol->get_stop(i));
+	}
+
+	h.set_component(ndx1, sol->get_stop(ndx2));
+
+	for (int i=ndx1+1; i<ndx2; i++)
+	{
+		h.set_component(i, sol->get_stop(i));
+	}
+
+	h.set_component(ndx2, sol->get_stop(ndx1));
+
+	for (int i=ndx2+1; i<n; i++)
+	{
+		h.set_component(i, sol->get_stop(i));
+	}
+
+	return h;
+
+}
+
+std::string swap_option::get_name() const
+{
+	return "swap";
+}
+
+
+#if 0
+three_opt::three_opt(int stop1, int stop2, int stop3)
+{
+
+	// move everything from indx1 to index2 to after index3
+}
+
+three_opt::~three_opt()
+{
+}
+
+double three_opt::get_improvement(const solution* sol) const
+{
+
+
+
+
+}
+
+bool three_opt::in_bounds(const solution* sol) const
+{
+}
+
+void three_opt::apply(solution* sol) const
+{
+	int n = sol->get_city()->num_stops;
+	int *tmp = new int[n];
+//	for (int i=0;i<)
+}
+
+hash three_opt::get_hash(const solution* sol) const
+{
+
+}
+
+std::string three_opt::get_name() const
+{
+	return "three-opt";
+}
+#endif

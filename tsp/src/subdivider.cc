@@ -131,7 +131,7 @@ void append_to(subcity *subcity, solution *subsol, solution *sol)
 		}
 		
 		int stop = subcity->mapping[subsol->get_stop(i)];
-		sol->service(ndx, stop);
+		sol->set_path_at(ndx, stop);
 	}
 	
 //	std::cout << "Created this: " << std::endl;

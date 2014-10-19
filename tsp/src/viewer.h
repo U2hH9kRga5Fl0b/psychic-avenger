@@ -23,6 +23,8 @@ public:
 	viewer(solution* sol, const std::string& name, int freq=0);
 	~viewer();
 	
+	void show(solution* sol);
+
 	void update();
 	void snapshot(const std::string& filename);
 	

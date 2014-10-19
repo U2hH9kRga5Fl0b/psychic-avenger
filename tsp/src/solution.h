@@ -33,8 +33,9 @@ public:
 	{
 		return serviced_index[stop] >= 0;
 	}
+
 //	Be careful when you use this method...
-	void service(int index, int stop)
+	void set_path_at(int index, int stop)
 	{
 //		int oldstop = path[index];
 //		if (oldstop >= 0)
@@ -46,6 +47,18 @@ public:
 			serviced_index[stop] = index;
 		}
 		path[index] = stop;
+	}
+
+	inline void swap(int idx1, int idx2)
+	{
+		int s1 = path[idx1];
+		int s2 = path[idx2];
+
+		serviced_index[s1] = idx2;
+		serviced_index[s2] = idx1;
+
+		path[idx1] = s2;
+		path[idx2] = s1;
 	}
 	int get_stop(int ndx) const
 	{

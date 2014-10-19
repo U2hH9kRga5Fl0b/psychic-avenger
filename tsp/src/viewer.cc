@@ -253,4 +253,11 @@ void view_city(city* bigcity, cv::Mat& mat, int width, int height)
 		cv::circle(mat, next, 2, color);
 	}
 }
+
+void viewer::show(solution* sol_)
+{
+	(*sol) = (*sol_);
+	update();
+}
+
 #endif

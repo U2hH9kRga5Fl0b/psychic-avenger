@@ -34,12 +34,11 @@ distance solution::get_cost() const
 		return 0;
 	}
 	
-	
 	distance cost = 0;
 	
 	int n = c->num_stops;
 	
-	for (int i=0;i<n-1; i++)
+	for (int i=0; i<n-1; i++)
 	{
 		int next = path[i+1];
 		if (next < 0)
@@ -49,7 +48,7 @@ distance solution::get_cost() const
 		
 		cost += c->get_cost(path[i], next);
 	}
-	
+
 	return cost;
 }
 
@@ -304,7 +303,7 @@ void solution::random(std::function<void(void)> callback)
 	
 	for (int i=0; i<n; i++)
 	{
-		service(i, order[i]);
+		set_path_at(i, order[i]);
 		callback();
 	}
 	
@@ -325,7 +324,7 @@ void solution::nearest(std::function<void(void)> callback)
 	}
 	
 	int first = rand() % n; // first one chosen at random...
-	service(0, remaining[first]);
+	set_path_at(0, remaining[first]);
 	
 	{
 		int tmp = remaining[0];
@@ -354,7 +353,7 @@ void solution::nearest(std::function<void(void)> callback)
 			remaining[idxmin] = tmp;
 		}
 		
-		service(i, remaining[i]);
+		set_path_at(i, remaining[i]);
 		
 		callback();
 		is_valid();

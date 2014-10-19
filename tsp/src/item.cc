@@ -33,6 +33,19 @@ itemizer::itemizer(city* c)
 				continue;
 			}
 			local_options.push_back(new two_opt{i, j, c});
+//
+
+
+
+
+
+
+
+
+
+
+
+			local_options.push_back(new swap_option{i, j, c});
 		}
 	}
 	

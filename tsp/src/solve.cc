@@ -444,7 +444,8 @@ int main(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-	srand(5000014);
+	srand(5000016);
+//	srand(time(nullptr));
 	city* c;
 
 	{
@@ -462,7 +463,11 @@ int main(int argc, char **argv)
 
 	init_hash_key(c->num_stops);
 
+//	void test_hash_diffs(city* c);
+//	test_hash_diffs(c);
+
 	itemizer items{c};
+
 
 	solution* sol1 = new solution{c};
 	viewer v1{sol1, "nearest1"};
@@ -482,7 +487,10 @@ int main(int argc, char **argv)
 //	levenshtein(sol1, sol2);
 //	v2.pause();
 
-	fastest_descent(sol1, sol2, items, [&tv](){tv.update();});
+	void get_there(solution* s1, solution *s2);
+	get_there(sol1, sol2);
+//	link_paths(sol1, sol2, items, [&tv](){tv.update();});
+//	fastest_descent(sol1, sol2, items, [&tv](){tv.update();});
 
 	destroy_hash_key(c->num_stops);
 

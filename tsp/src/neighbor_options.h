@@ -53,6 +53,20 @@ protected:
 	std::string get_name() const;
 };
 
+class three_opt : public neighbor_option
+{
+public:
+	three_opt(int stop1, int stop2, int stop3);
+	~three_opt();
+
+	double get_improvement(const solution* sol) const;
+	bool in_bounds(const solution* sol) const;
+	void apply(solution* sol) const;
+	hash get_hash(const solution* sol) const;
+protected:
+	std::string get_name() const;
+};
+
 // This represents the action of rescheduling stop1 to come after stop2
 class resched_option : public neighbor_option
 {
@@ -67,7 +81,21 @@ public:
 	hash get_hash(const solution* sol) const;
 protected:
 	std::string get_name() const;
+};
 
+class swap_option : public neighbor_option
+{
+public:
+	swap_option(int stop1, int stop2, city* c);
+	~swap_option();
+
+	double get_improvement(const solution* sol) const;
+	bool in_bounds(const solution* sol) const;
+	void apply(solution* sol) const;
+
+	hash get_hash(const solution* sol) const;
+protected:
+	std::string get_name() const;
 };
 
 class nothing_option : public neighbor_option
