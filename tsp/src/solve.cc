@@ -448,8 +448,10 @@ int main(int argc, char **argv)
 {
 	void get_single_relink();
 	int compare_different_solvers();
+	void make_images();
 	//get_single_relink();
-	compare_different_solvers();
+	//compare_different_solvers();
+	make_images();
 }
 
 

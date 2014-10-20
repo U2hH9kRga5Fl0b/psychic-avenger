@@ -53,6 +53,53 @@ bool order_tabu_search(solution* sol, itemizer& items, tabu_list* list, std::fun
 	return true;
 }
 
+
+
+
+void somewhat_ordered_tabu_search(solution* sol, itemizer& items, tabu_list* list, std::function<void(const solution* s)> callback)
+{
+	int n = sol->get_city()->num_stops;
+	int num_options = items.get_num_options();
+
+	auto cmp = [sol](const neighbor_option* o1, const neighbor_option* o2)
+	{
+		return o1->get_improvement(sol) < o2->get_improvement(sol);
+	};
+
+	std::list<const neighbor_option*> improvements;
+
+	for (;;)
+	{
+		improvements.clear();
+
+		for (int i = 0; i < num_options; i++)
+		{
+			if (items.get_option(i)->get_improvement(sol) < 0.0)
+			{
+				improvements.push_back(items.get_option(i));
+			}
+		}
+
+		if (improvements.size() == 0)
+		{
+			return;
+		}
+
+		improvements.sort(cmp);
+
+		auto end = improvements.end();
+		for (auto it = improvements.begin(); it != end; ++it)
+		{
+			if ((*it)->get_improvement(sol) >= 0)
+			{
+				continue;
+			}
+			(*it)->apply(sol);
+			callback(sol);
+		}
+	}
+}
+
 intensifier::intensifier(city* c, tabu_list* list_, int max_length_, std::function<void(const solution*sol)> callback_) :
 	items{c},
 	list{list_},

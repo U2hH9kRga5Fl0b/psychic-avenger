@@ -6,8 +6,8 @@
 
 #include <opencv/highgui.h>
 
-#define default_width  500
-#define default_height 500
+#define default_width  150
+#define default_height 150
 
 #include <vector>
 #include <mutex>

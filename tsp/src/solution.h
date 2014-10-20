@@ -83,6 +83,7 @@ public:
 	}
 	
 	solution& operator=(const solution& other);
+	bool operator==(const solution& other);
 	bool operator<(const solution& other) const;
 	friend std::ostream& operator<<(std::ostream& out, const solution& sol);
 	

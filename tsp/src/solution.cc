@@ -361,3 +361,20 @@ void solution::nearest(std::function<void(void)> callback)
 	
 	delete[] remaining;
 }
+
+bool solution::operator==(const solution& other)
+{
+	int n = get_city()->num_stops;
+	if (n != other.get_city()->num_stops)
+	{
+		return false;
+	}
+	for (int i = 0; i < n; i++)
+	{
+		if (path[i] != other.path[i])
+		{
+			return false;
+		}
+	}
+	return true;
+}
