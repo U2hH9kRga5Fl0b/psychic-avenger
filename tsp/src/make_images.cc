@@ -49,6 +49,10 @@ void make_images()
 	});
 
 #if 1
+
+
+
+
 #else
 	double mcost = sol1.get_cost();
 
