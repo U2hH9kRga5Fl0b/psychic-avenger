@@ -8,6 +8,7 @@
 #include "count_minima.h"
 #include "common.h"
 #include "path_relinking.h"
+#include "intensifier.h"
 
 #include <iostream>
 #include <thread>
@@ -43,9 +44,9 @@ void subdivide_base_case(solution* othersol)
 {
 	std::stringstream s;
 	s << "subdivide " << rand();
-	viewer v{othersol, "basecase"};
+	viewer v{"basecase"};
 	itemizer itms{othersol->get_city()};
-	itms.greedy_search(othersol, [&v](){v.update();});
+	itms.greedy_search(othersol, [&v, othersol](){v.update(othersol);});
 }
 
 
@@ -246,8 +247,8 @@ void show_final_solution(solution* sol, const std::string& name)
 	print_time(name);
 	
 #if GRAPHICS
-	viewer v{sol, name};
-	v.update();
+	viewer v{name};
+	v.update(sol);
 	v.pause();
 #else
 	std::cout << *sol << std::endl;
@@ -275,24 +276,24 @@ void print_usage(int argc, char **argv)
 	trap();
 }
 
+}
+
+
 void seed(solution *sol, viewer& v)
 {
 	
 #if 0
 		sol->random();
 #else
-#if 1
+#if 0
 		sol->empty();
-		grow(sol, [&v](){v.update();});
+		grow(sol, [&v, sol](){v.update(sol);});
 #else
-		sol->nearest([&v](){v.update();});
+		sol->nearest([&v,  sol](){v.update(sol);});
 #endif
 #endif
 	
 }
-
-}
-
 
 #ifdef HAVE_MAIN
 int main(int argc, char **argv)
@@ -442,61 +443,13 @@ int main(int argc, char **argv)
 #else
 
 
+
 int main(int argc, char **argv)
 {
-	srand(5000016);
-//	srand(time(nullptr));
-	city* c;
-
-	{
-		std::ifstream infile {"city.txt"};
-		if (!infile.is_open())
-		{
-			std::cout << "Unable to open city file!" << std::endl;
-		}
-		c = load_city(infile);
-		if (c == nullptr)
-		{
-			return -1;
-		}
-	}
-
-	init_hash_key(c->num_stops);
-
-//	void test_hash_diffs(city* c);
-//	test_hash_diffs(c);
-
-	itemizer items{c};
-
-
-	solution* sol1 = new solution{c};
-	viewer v1{sol1, "nearest1"};
-	seed(sol1, v1);
-	items.greedy_search(sol1, [&v1](){v1.update();});
-
-	solution* sol2 = new solution{c};
-	viewer v2{sol2, "nearest2"};
-	seed(sol2, v2);
-	items.greedy_search(sol2, [&v2](){v2.update();});
-
-	solution *traveler = new solution{c};
-	(*traveler) = (*sol1);
-
-	viewer tv{traveler, "path_between"};
-
-//	levenshtein(sol1, sol2);
-//	v2.pause();
-
-	void get_there(solution* s1, solution *s2);
-	get_there(sol1, sol2);
-//	link_paths(sol1, sol2, items, [&tv](){tv.update();});
-//	fastest_descent(sol1, sol2, items, [&tv](){tv.update();});
-
-	destroy_hash_key(c->num_stops);
-
-	delete c;
-
-	return 0;
+	void get_single_relink();
+	int compare_different_solvers();
+	//get_single_relink();
+	compare_different_solvers();
 }
 
 

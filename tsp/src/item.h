@@ -38,13 +38,13 @@ public:
 	void nth_anneal(solution* sol, int num_steps, int range, std::function<void(void)> callback=[](){});
 	void sample_anneal(solution* sol, int num_steps, int nsamples, std::function<void(void)> callback=[](){});
 	
-	// tabu
 	void hybrid_search(solution* sol, int nsamples, std::function<void(void)> callbac=[](){});
 
 	// tabu
 	void ordered_search(solution* sol, std::function<void(void)> callback=[](){});
 	void greedy_search(solution* sol, std::function<void(void)> callback=[](){});
-	
+
+	// tabu
 	
 	void hybrid_search(solution* sol, double percent, std::function<void(void)> callback=[](){});
 	void ordered_tabu_search(solution* sol, bloom_filter& tabs, int threshold, std::function<void(void)> callback=[](){});

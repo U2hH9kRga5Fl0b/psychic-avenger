@@ -48,12 +48,12 @@ public:
 	void mark_tabu(const hash& h);
 	
 	friend std::ostream& operator<<(std::ostream& out, const bloom_filter& filter);
+	// wolverine style...
+	void erase_memory();
 private:
 	double get_saturation() const;
 	bool get_bit_at_index(int n) const;
 	void set_bit_at_index(int n);
-	// wolverine style...
-	void erase_memory();
 	
 	int nbits;
 	int nbytes;
@@ -76,6 +76,17 @@ private:
 	
 	int size;
 	std::set<hash> hashes;
+};
+
+class empty_list : public tabu_list
+{
+public:
+	empty_list() {}
+	~empty_list() {}
+
+	bool is_tabu(const hash& h) { return stopped(false); }
+	void mark_tabu(const hash& h) {}
+
 };
 
 

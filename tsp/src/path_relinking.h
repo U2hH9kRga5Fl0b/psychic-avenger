@@ -38,13 +38,15 @@ public:
 };
 
 
+int distance_between_sequence_no_order(const solution* sol1, const solution *sol2);
+
+int move_from_to(solution* source, solution *dest, std::function<void(const solution*s)> f);
 
 
 
-
-operation_path* levenshtein(solution* s1, solution* s2);
-void link_paths(solution* source, solution* dest, itemizer& items, std::function<void(void)> callback = [](){});
-void fastest_descent(solution* source, solution* dest, itemizer& items, std::function<void(void)> callback = [](){});
+//operation_path* levenshtein(solution* s1, solution* s2);
+//void link_paths(solution* source, solution* dest, itemizer& items, std::function<void(void)> callback = [](){});
+//void fastest_descent(solution* source, solution* dest, itemizer& items, std::function<void(void)> callback = [](){});
 
 
 #endif /* PATH_RELINKING_H_ */

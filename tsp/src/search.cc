@@ -38,7 +38,7 @@ void itemizer::greedy_search(solution *sol, std::function<void(void)> callback)
 			break;
 		}
 		o->apply(sol);
-		std::cout << "new cost: " << sol->get_cost() << std::endl;
+//		std::cout << "new cost: " << sol->get_cost() << std::endl;
 		callback();
 	}
 }

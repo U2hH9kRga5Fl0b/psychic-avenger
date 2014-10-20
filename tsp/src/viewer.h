@@ -8,6 +8,7 @@
 #include "solution.h"
 
 #include <chrono>
+#include <mutex>
 
 #include <opencv2/opencv.hpp>
 
@@ -20,13 +21,11 @@ void view_city(city* bigcity, cv::Mat& mat, int width, int height);
 class viewer
 {
 public:
-	viewer(solution* sol, const std::string& name, int freq=0);
+	viewer(const std::string& name);
 	~viewer();
 	
-	void show(solution* sol);
-
-	void update();
-	void snapshot(const std::string& filename);
+	void update(const solution* sol);
+	void snapshot(const solution* sol, const std::string& filename);
 	
 	void pause(int length=0);
 private:
@@ -38,17 +37,14 @@ private:
 	cv::Scalar color;
 	cv::VideoWriter vid;
 #endif
-	
-	double minx, miny, maxx, maxy;
-	
-	int freq;
-	int cnt;
-	
 	int location;
 	
 	std::chrono::steady_clock::time_point start;
 	std::ofstream costs;
 	int count;
+
+	std::mutex mmut;
+
 };
 
 #endif

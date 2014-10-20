@@ -7,7 +7,7 @@
 void anneal_s(solution *sol, int convergence_threshold, double accept_negative_prob)
 {
 	itemizer options{sol->get_city()};
-	viewer v{sol, "2opts+resched anneal", 0};
+	viewer v{"2opts+resched anneal"};
 	
 	std::cout << "P(hurt myself) = " << accept_negative_prob << std::endl;
 	
@@ -34,17 +34,16 @@ void anneal_s(solution *sol, int convergence_threshold, double accept_negative_p
 			count = 0;
 		}
 		
-		v.update();
+		v.update(sol);
 	}
 }
 
 constexpr	double grow_anneal = .9;
 
-void work_backward(solution*sol, int anneal, itemizer& options, viewer& v)
+void work_backward(solution*sol, int anneal, itemizer& options, std::function<void(void)> l, int type=3);
+void work_backward(solution*sol, int anneal, itemizer& options, std::function<void(void)> l, int type)
 {
-	auto l = [&v](){v.update();};
-	
-	switch(3)
+	switch(type)
 	{
 		case 0:
 		{
@@ -58,7 +57,7 @@ void work_backward(solution*sol, int anneal, itemizer& options, viewer& v)
 					return;
 				}
 				option->apply(sol);
-				v.update();
+				l();
 			}
 		}
 		break;
@@ -69,7 +68,7 @@ void work_backward(solution*sol, int anneal, itemizer& options, viewer& v)
 			for (int i=0; i<anneal; i++)
 			{
 				sol->remove_at_ndx(start);
-				v.update();
+				l();
 			}
 		}
 		break;
@@ -86,19 +85,19 @@ void work_backward(solution*sol, int anneal, itemizer& options, viewer& v)
 				} while ((idx = sol->get_index_of_stop(stop)) < 0);
 				
 				sol->remove_at_ndx(idx);
-				v.update();
+				l();
 			}
 		}
 		break;
 		case 3:
 		{
-			std::cout << "applying good options..." << std::endl;
-			options.sample_anneal(sol, anneal, 50, l);
+//			std::cout << "applying good bad options..." << std::endl;
+			options.sample_anneal(sol, anneal, 10, l);
 		}
 		break;
 	}
 	
-	if (1)
+	if (type == 3 || type == 0)
 	{
 		int size = sol->length();
 		int mid = (sol->get_city()->num_stops + size) / 2;
@@ -115,8 +114,8 @@ void work_backward(solution*sol, int anneal, itemizer& options, viewer& v)
 void anneal(solution *sol, int convergence_threshold, double tol, int start_anneal, int dec)
 {
 	itemizer options{sol->get_city()};
-	viewer v{sol, "2opts+resched anneal", 0};
-	auto l = [&v](){v.update();};
+	viewer v{"2opts+resched anneal"};
+	auto l = [&sol, &v](){v.update(sol);};
 	
 	sol->empty();
 	grow(sol, l, grow_anneal);
@@ -138,7 +137,7 @@ void anneal(solution *sol, int convergence_threshold, double tol, int start_anne
 			count++;
 			(*sol) = (*best);
 			
-			work_backward(sol, anneal, options, v);
+			work_backward(sol, anneal, options, l);
 			
 			if (0)
 			{

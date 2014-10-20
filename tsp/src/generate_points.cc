@@ -85,7 +85,7 @@ void generate_points(city_type t, int n, double *x, double *y)
 			for (int i=0;i<n;i++)
 			{
 				double t = 50 * (rand() / (double) (RAND_MAX));
-				double out = .3;
+				double out = .75;
 				
 				x[i] = t * std::cos(t / out);
 				y[i] = t * std::sin(t / out);

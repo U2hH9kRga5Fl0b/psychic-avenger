@@ -6,7 +6,7 @@
 class optimizer
 {
 public:
-	optimizer(const std::string& name, city *c, int freq);
+	optimizer(const std::string& name, city *c);
 	~optimizer();
 	
 	bool offer();

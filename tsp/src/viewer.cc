@@ -28,7 +28,7 @@ namespace
 		
 		if (locs.size() == 0)
 		{
-			int maxx = 5000;
+			int maxx = 1920;
 			int maxy = 1080;
 		
 			int next_locx = 100;
@@ -70,6 +70,7 @@ namespace
 		
 		std::cout << "No more available locations for a screen!";
 		trap();
+		return -1;
 	}
 }
 
@@ -82,8 +83,7 @@ void release_viewing_resources()
 //	pthread_mutex_destroy(&mut);
 }
 
-viewer::viewer(solution* sol_, const std::string& name, int freq_) :
-	sol{sol_},
+viewer::viewer(const std::string& name) :
 	winname{name},
 #if GRAPHICS
 	mat{cv::Mat::zeros(default_height, default_width, CV_8UC3)},
@@ -91,21 +91,13 @@ viewer::viewer(solution* sol_, const std::string& name, int freq_) :
 		255 * (rand() / (double) RAND_MAX),
 		255 * (rand()  / (double) RAND_MAX),
 		255 * (rand()  / (double) RAND_MAX)},
-//	color{255, 255, 255},
-
 	vid {"output/" + name + ".mpeg", CV_FOURCC('P','I','M','1'), 120, cv::Size(default_width, default_height)},
 #endif
-	minx{DBL_MAX},
-	miny{DBL_MAX},
-	maxx{-DBL_MAX},
-	maxy{-DBL_MAX},
-	freq{freq_},
 	start{std::chrono::steady_clock::now()},
 	costs{"output/" + name + ".txt"},
-	count{0}
+	count{0},
+	mmut{}
 {
-	city* c = sol->get_city();
-	get_bounds(c->locsx, c->locsy, c->num_stops, minx, maxx, miny, maxy);
 	
 	std::lock_guard<std::mutex> lock(mut);
 	
@@ -117,12 +109,11 @@ viewer::viewer(solution* sol_, const std::string& name, int freq_) :
 	cvNamedWindow(winname.c_str(), CV_WINDOW_AUTOSIZE);
 	cvMoveWindow(winname.c_str(), locs.at(location).x, locs.at(location).y);
 #endif
-	
-	cnt = INT_MAX;
 }
 
-void viewer::snapshot(const std::string& filename)
+void viewer::snapshot(const solution* sol, const std::string& filename)
 {
+	update(sol);
 	std::lock_guard<std::mutex> lock(mut);
 #if GRAPHICS
 	cv::imwrite(filename, mat);
@@ -147,24 +138,25 @@ void viewer::pause(int length)
 #endif
 }
 
-void viewer::update()
+void viewer::update(const solution* sol)
 {
-	std::lock_guard<std::mutex> lock(mut);
-	if (freq == -1)
-	{
-		return;
-	}
-	else if (freq != 0)
-	{
-		if (cnt++ < freq)
-		{
-			return;
-		}
-		cnt = 0;
-	}
-	
+	std::lock_guard<std::mutex> lock(mmut);
+
+
+	double minx, miny, maxx, maxy;
+	minx = DBL_MAX;
+	miny = DBL_MAX;
+	maxx =-DBL_MAX;
+	maxy = -DBL_MAX;
+	city* c = sol->get_city();
+	get_bounds(c->locsx, c->locsy, c->num_stops, minx, maxx, miny, maxy);
+
+
+
+
+
+
 	int num_stops = sol->get_city()->num_stops;
-	
 #if GRAPHICS
 	mat = cv::Scalar(0, 0, 0);
 	
@@ -206,7 +198,8 @@ void viewer::update()
 	s << "cost=" << sol->get_cost();
 	
 	cv::Scalar invert = cv::Scalar::all(255) - color;
-	
+
+	std::lock_guard<std::mutex> lock2(mut);
 	cv::putText(mat, s.str(), cv::Point(0,20), CV_FONT_HERSHEY_PLAIN, 1.0, invert);
 	vid.write(mat);
 	
@@ -220,6 +213,7 @@ void viewer::update()
 #if GRAPHICS
 void view_city(city* ci, const std::string& name)
 {
+	std::lock_guard<std::mutex> lock(mut);
 	cvNamedWindow(name.c_str(), CV_WINDOW_AUTOSIZE);
 	cvMoveWindow(name.c_str(), 100,100);
 	
@@ -235,6 +229,7 @@ void view_city(city* ci, const std::string& name)
 
 void view_city(city* bigcity, cv::Mat& mat, int width, int height)
 {
+	std::lock_guard<std::mutex> lock(mut);
 	double xmin, xmax, ymin, ymax;
 	get_bounds(bigcity->locsx, bigcity->locsy, bigcity->num_stops, xmin, xmax, ymin, ymax);
 	
@@ -252,12 +247,6 @@ void view_city(city* bigcity, cv::Mat& mat, int width, int height)
 		cv::Point next{(int)x, (int)y};
 		cv::circle(mat, next, 2, color);
 	}
-}
-
-void viewer::show(solution* sol_)
-{
-	(*sol) = (*sol_);
-	update();
 }
 
 #endif

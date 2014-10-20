@@ -26,7 +26,7 @@ namespace
 
 solution* exact(city *c)
 {
-	optimizer opt{"exact", c, 100};
+	optimizer opt{"exact", c};
 	
 	opt.current.random();
 	opt.best.empty();

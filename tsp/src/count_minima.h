@@ -10,7 +10,7 @@
 class minima_collection
 {
 public:
-	minima_collection() {}
+	minima_collection() : collection{}, c{nullptr} {}
 	~minima_collection() {}
 	
 	void sample(solution* sol)
@@ -46,8 +46,8 @@ public:
 			
 			solution* opt = new solution{this->c};
 			pair.first.assign(opt);
-			viewer local_opt{opt, "local minimum"};
-			local_opt.update();
+			viewer local_opt{"local minimum"};
+			local_opt.update(opt);
 			
 			std::cout << "For this local minimum there were " << pair.second.size() << " initial configurations." << std::endl;
 			sum += pair.second.size();
@@ -57,8 +57,8 @@ public:
 			{
 				solution* start = new solution{this->c};
 				ipair.assign(start);
-				viewer ini{start, "one starting point optimum"};
-				ini.update();
+				viewer ini{"one starting point optimum"};
+				ini.update(start);
 				
 				ini.pause(1000);
 			});
@@ -74,7 +74,7 @@ private:
 class anneal_statistics
 {
 public:
-	anneal_statistics(){}
+	anneal_statistics() : num_sampled{0}, local_minima_found{0}, cost_of_best_local_minima{0} {}
 	~anneal_statistics(){}
 
 	int num_sampled;
@@ -84,6 +84,5 @@ public:
 
 
 void complete_decision_space(city* c);
-
 
 #endif
